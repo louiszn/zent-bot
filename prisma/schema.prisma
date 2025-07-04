@@ -23,6 +23,8 @@ model Message {
 	id String @id
 	characterId String?
 	content String
+	repliedMessageId String?
+	replyPreview String?
 
 	character Character? @relation(fields: [characterId], references: [id], onDelete: SetNull)
 }

@@ -4,7 +4,8 @@ import { Listener, useListener } from "../base/Listener.js";
 import prisma from "../libs/prisma.js";
 import ZentBot from "../base/ZentBot.js";
 
-import { getUserCharacters } from "../libs/character.js";
+import { getReplyPreview, getUserCharacters, MAX_MESSAGE_CONTENT_LENGTH } from "../libs/character.js";
+import { getWebhook } from "../libs/webhook.js";
 
 @useListener("messageCreate")
 export default class CharacterMessageListener extends Listener<"messageCreate"> {
@@ -48,18 +49,17 @@ export default class CharacterMessageListener extends Listener<"messageCreate"> 
 		if (!contentToSend && !message.attachments.size) {
 			return;
 		}
-
-		// Because of limit of characters a webhook can send, we will use 100 characters for the replied message preview.
-		if (contentToSend.length > 1_900) {
+		
+		if (contentToSend.length > MAX_MESSAGE_CONTENT_LENGTH) {
 			return;
 		}
 
-		let repliedMessagePreview: string | null = null;
+		let replyPreview: string | null = null;
 
 		if (message.reference?.messageId) {
 			try {
 				const repliedMessage = await message.channel.messages.fetch(message.reference.messageId);
-				repliedMessagePreview = await this.getPreviewMessage(repliedMessage);
+				replyPreview = await getReplyPreview(repliedMessage);
 			} catch (error) {
 				console.error("Failed to fetch replied message:", error);
 			}
@@ -68,7 +68,7 @@ export default class CharacterMessageListener extends Listener<"messageCreate"> 
 		let webhook: Webhook | null = null;
 
 		try {
-			webhook = await this.getWebhook(client, message.channel);
+			webhook = await getWebhook(client, message.channel);
 		} catch (error) {
 			console.error("Failed to fetch or create a new webhook:", error);
 		}
@@ -83,14 +83,14 @@ export default class CharacterMessageListener extends Listener<"messageCreate"> 
 			const characterMessage = await webhook.send({
 				username: character.name || character.tag,
 				avatarURL: character.avatarURL || undefined,
-				content: repliedMessagePreview
-					? `${repliedMessagePreview}\n${contentToSend}`
+				content: replyPreview
+					? `${replyPreview}\n${contentToSend}`
 					: contentToSend,
 				threadId: message.channel.isThread() ? message.channelId : undefined,
 				files: message.attachments.map((attachment) => ({
 					name: attachment.name,
 					attachment: attachment.proxyURL,
-				}))
+				})),
 			});
 
 			await prisma.message.create({
@@ -98,68 +98,12 @@ export default class CharacterMessageListener extends Listener<"messageCreate"> 
 					id: characterMessage.id,
 					content: contentToSend,
 					characterId: character.id,
+					repliedMessageId: message.reference?.messageId,
+					replyPreview,
 				}
 			});
 		} catch (error) {
 			console.error("Failed to send webhook message:", error);
 		}
-	}
-
-	private async getWebhook(client: ZentBot<true>, channel: GuildTextBasedChannel) {
-		let baseChannel;
-
-		// Threads can send wehook messages using its parent channel and threadId option.
-		if (channel.isThread()) {
-			if (!channel.parent?.isTextBased()) {
-				return null;
-			}
-
-			baseChannel = channel.parent;
-		} else {
-			baseChannel = channel;
-		}
-
-		let webhook: Webhook | undefined = client.botWebhooks.get(baseChannel.id);
-
-		if (!webhook) {
-			const webhooks = await baseChannel.fetchWebhooks();
-			webhook = webhooks.find((w) => w.owner?.id === client.user.id);
-
-			if (!webhook) {
-				webhook = await baseChannel.createWebhook({
-					name: client.user.displayName,
-				});
-			}
-
-			client.botWebhooks.set(baseChannel.id, webhook); // Cache the webhook so we don't have to re-fetch it
-		}
-
-		return webhook;
-	}
-
-	private async getPreviewMessage(message: Message) {
-		let author: string = message.author.toString()
-		let content = message.content;
-
-		if (message.webhookId) {
-			author = message.author.displayName;
-
-			const characterMessage = await prisma.message.findFirst({
-				where: { id: message.id },
-				include: {
-					character: true,
-				}
-			});
-
-			if (characterMessage) {
-				content = characterMessage.content;
-
-				if (characterMessage.character) {
-					author = characterMessage.character.name || characterMessage.character.tag;
-				}
-			}
-		}
-
-		return `-# ╭ **${author}** - [${content.slice(0, 50)}](${message.url})`;
 	}
 }

@@ -1,6 +1,9 @@
-import { Collection, EmbedBuilder } from "discord.js";
+import { Collection, EmbedBuilder, Message } from "discord.js";
 import prisma from "./prisma.js";
 import type { Character } from "@prisma/client";
+
+// Because of limit of characters a webhook can send, we will use 100 characters for the replied message preview
+export const MAX_MESSAGE_CONTENT_LENGTH = 1_900 as const;
 
 type CharacterCollection = Collection<string, Character>;
 
@@ -86,4 +89,30 @@ export function getCharacterInformationEmbed(character: Character) {
 > **Owner:** <@${character.userId}>
 > **Created at:** <t:${Math.floor(character.createdAt.getTime() / 1000)}:R>`)
 		.setTimestamp();
+}
+
+export async function getReplyPreview(message: Message) {
+	let author: string = message.author.toString()
+	let content = message.content;
+
+	if (message.webhookId) {
+		author = message.author.displayName;
+
+		const characterMessage = await prisma.message.findFirst({
+			where: { id: message.id },
+			include: {
+				character: true,
+			}
+		});
+
+		if (characterMessage) {
+			content = characterMessage.content;
+
+			if (characterMessage.character) {
+				author = characterMessage.character.name || characterMessage.character.tag;
+			}
+		}
+	}
+
+	return `-# ╭ **${author}** - [${content.slice(0, 50)}](${message.url})`;
 }

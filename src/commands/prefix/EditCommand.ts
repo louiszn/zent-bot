@@ -4,6 +4,7 @@ import ZentBot from "../../base/ZentBot.js";
 
 import { extractId } from "../../utils/string.js";
 import prisma from "../../libs/prisma.js";
+import { getWebhook } from "../../libs/webhook.js";
 
 @usePrefixCommand(["edit"])
 export default class DeleteCommand extends PrefixCommand {
@@ -19,12 +20,11 @@ export default class DeleteCommand extends PrefixCommand {
 			if (messageId) {
 				try {
 					targetMessage = await message.channel.messages.fetch(messageId);
+					newContent = args.slice(2).join(" ").trim();
 				} catch {
 					await message.channel.send("Couldn't find that message in this channel.");
 					return;
 				}
-
-				newContent
 			}
 		}
 
@@ -33,16 +33,22 @@ export default class DeleteCommand extends PrefixCommand {
 			if (message.reference?.messageId) {
 				try {
 					targetMessage = await message.channel.messages.fetch(message.reference.messageId);
+					newContent = args.slice(1).join(" ").trim();
 				} catch {
 					await message.channel.send("Couldn't find replied message in this channel.");
 					return;
 				}
 			} else {
-				await message.channel.send("You must specific your character's message to delete.");
+				await message.channel.send("You must specific your character's message to edit.");
 				return;
 			}
 		}
-		
+
+		if (!newContent) {
+			await message.channel.send("You must specific new content to edit.");
+			return;
+		}
+
 		const characterMessage = await prisma.message.findFirst({
 			where: { id: targetMessage.id },
 			include: { character: true },
@@ -53,12 +59,26 @@ export default class DeleteCommand extends PrefixCommand {
 			return;
 		}
 
+		const webhook = await getWebhook(client, message.channel);
+
+		if (!webhook || targetMessage.webhookId !== webhook.id) {
+			await message.channel.send("Couldn't edit this message since the original webhook is deleted.");
+			return;
+		}
+
 		await message.delete();
 
-		await targetMessage.delete();
+		const replyPreview = characterMessage.replyPreview;
 
-		await prisma.message.delete({
+		await webhook.editMessage(targetMessage, {
+			content: replyPreview
+				? `${replyPreview}\n${newContent}`
+				: newContent
+		});
+
+		await prisma.message.update({
 			where: { id: characterMessage.id },
+			data: { content: newContent },
 		});
 	}
 }
