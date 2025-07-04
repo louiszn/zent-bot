@@ -1,0 +1,16 @@
+import { InteractionContextType, SlashCommandBuilder } from "discord.js";
+import { HybridCommand, HybridContext, useHybridCommand } from "../../base/Command.js";
+import ZentBot from "../../base/ZentBot.js";
+
+@useHybridCommand({
+	applicationCommandData: new SlashCommandBuilder()
+		.setName("ping")
+		.setDescription("Displays bot latency.")
+		.setContexts(InteractionContextType.Guild),
+	prefixTriggers: ["ping"],
+})
+export default class PingCommand extends HybridCommand {
+	public async execute(client: ZentBot<true>, context: HybridContext) {
+		await context.send(`Pong! ${client.ws.ping}ms!`);
+	}
+}

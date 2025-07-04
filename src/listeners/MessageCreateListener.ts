@@ -1,0 +1,43 @@
+import { Message } from "discord.js";
+import { Listener, useListener } from "../base/Listener.js";
+
+import ZentBot from "../base/ZentBot.js";
+import { HybridCommand, PrefixHybridContext } from "../base/Command.js";
+
+const PREFIX = "_";
+
+@useListener("messageCreate")
+export default class MessageCreateListener extends Listener<"messageCreate"> {
+	public async execute(client: ZentBot<true>, message: Message) {
+		if (!message.inGuild() || message.author.bot) {
+			return;
+		}
+
+		if (!message.content.toLowerCase().startsWith(PREFIX.toLowerCase())) {
+			return;
+		}
+
+		const args = message.content
+			.slice(PREFIX.length)
+			.trim()
+			.split(/\s+/g);
+
+		const commandName = args[0].toLowerCase();
+
+		const command = client.commandManager.prefixCommands.get(commandName);
+
+		if (!command) {
+			return;
+		}
+
+		try {
+			if (command instanceof HybridCommand) {
+				await command.execute(client, new PrefixHybridContext(message), args);
+			} else {
+				await command.execute(client, message, args);
+			}
+		} catch (error) {
+			console.error(`An error occurred while executing command '${commandName}':`, error);
+		}
+	}
+}

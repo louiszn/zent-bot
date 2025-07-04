@@ -1,0 +1,23 @@
+{
+	"name": "zentbot",
+	"version": "1.0.0",
+	"description": "",
+	"license": "MIT",
+	"author": "louiszn",
+	"type": "module",
+	"scripts": {
+		"start": "node dist/index.js",
+		"deloy": "node dist/deloyCommands.js",
+		"build": "tsc"
+	},
+	"devDependencies": {
+		"prisma": "^6.11.0",
+		"typescript": "^5.8.3"
+	},
+	"dependencies": {
+		"@prisma/client": "^6.11.0",
+		"discord.js": "^14.21.0",
+		"dotenv": "^17.0.0",
+		"fast-glob": "^3.3.3"
+	}
+}
