@@ -178,6 +178,8 @@ export interface HybridCommandConstructor {
 	prefixTriggers: string[];
 }
 
+export type CommandConstructor = SlashCommandConstructor | PrefixCommandConstructor | ContextMenuCommandConstructor | HybridCommandConstructor;
+
 export function usePrefixCommand(triggers: string[]) {
 	return function <T extends typeof PrefixCommand>(constructor: T) {
 		(constructor as T & PrefixCommandConstructor).triggers = triggers;

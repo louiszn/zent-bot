@@ -1,5 +1,5 @@
 import { Collection } from "discord.js";
-import { SlashCommand, HybridCommand, PrefixCommand, ContextMenuCommand, loadCommandRegistry, BaseCommand } from "../base/Command.js";
+import { SlashCommand, HybridCommand, PrefixCommand, ContextMenuCommand, loadCommandRegistry, BaseCommand, SlashCommandConstructor, PrefixCommandConstructor, ContextMenuCommandConstructor, HybridCommandConstructor, CommandConstructor } from "../base/Command.js";
 import ZentBot from "../base/ZentBot.js";
 
 export default class CommandManager<Ready extends boolean = boolean> {
@@ -23,68 +23,59 @@ export default class CommandManager<Ready extends boolean = boolean> {
 
 		let commandCount = 0;
 
-		for (const constructor of slashCommandsRegistry) {
-			try {
-				const instance = new constructor();
+		commandCount += this.registerCommandType<SlashCommand, SlashCommandConstructor>(
+			slashCommandsRegistry,
+			"slash",
+			(instance, constructor) => this.registerSlashCommand(constructor.data.name, instance)
+		);
 
-				instance["client"] = this.client as ZentBot<true>;
+		commandCount += this.registerCommandType<PrefixCommand, PrefixCommandConstructor>(
+			prefixCommandsRegistry,
+			"prefix",
+			(instance, constructor) => this.registerPrefixCommand(constructor.triggers, instance)
+		);
 
-				if (this.registerSlashCommand(constructor.data.name, instance)) {
-					commandCount++;
-				}
-			} catch (error) {
-				this.logCommandRegisterError(error, constructor.name, "slash");
-			}
-		}
+		commandCount += this.registerCommandType<ContextMenuCommand, ContextMenuCommandConstructor>(
+			contextMenuCommandsRegistry,
+			"context menu",
+			(instance, constructor) => this.registerContextMenuCommand(constructor.data.name, instance)
+		);
 
-		for (const constructor of prefixCommandsRegistry) {
-			try {
-				const instance = new constructor();
-
-				instance["client"] = this.client as ZentBot<true>;
-
-				if (this.registerPrefixCommand(constructor.triggers, instance)) {
-					commandCount++;
-				}
-			} catch (error) {
-				this.logCommandRegisterError(error, constructor.name, "prefix");
-			}
-		}
-
-		for (const constructor of contextMenuCommandsRegistry) {
-			try {
-				const instance = new constructor();
-
-				instance["client"] = this.client as ZentBot<true>;
-
-				if (this.registerContextMenuCommand(constructor.data.name, instance)) {
-					commandCount++;
-				}
-			} catch (error) {
-				this.logCommandRegisterError(error, constructor.name, "context menu");
-			}
-		}
-
-		for (const constructor of hybridCommandsRegistry) {
-			try {
-				const instance = new constructor();
-
-				instance["client"] = this.client as ZentBot<true>;
-
-				const {
-					applicationCommandData: { name },
-					prefixTriggers
-				} = constructor;
-
-				if (this.registerHybridCommand(name, prefixTriggers, instance)) {
-					commandCount++;
-				}
-			} catch (error) {
-				this.logCommandRegisterError(error, constructor.name, "hybrid");
-			}
-		}
+		commandCount += this.registerCommandType<HybridCommand, HybridCommandConstructor>(
+			hybridCommandsRegistry,
+			"hybrid",
+			(instance, constructor) => this.registerHybridCommand(
+				constructor.applicationCommandData.name,
+				constructor.prefixTriggers,
+				instance,
+			)
+		);
 
 		console.log(`Loaded ${commandCount} commands`);
+	}
+
+	private registerCommandType<T extends BaseCommand, C extends CommandConstructor>(
+		registry: C[],
+		type: string,
+		registerFn: (instance: T, constructor: C) => boolean
+	) {
+		let count = 0;
+
+		for (const constructor of registry) {
+			try {
+				const instance = new constructor() as T;
+				
+				instance["client"] = this.client as ZentBot<true>;
+
+				if (registerFn(instance, constructor)) {
+					count++;
+				}
+			} catch (error) {
+				this.logCommandRegisterError(error, constructor.name, type);
+			}
+		}
+
+		return count;
 	}
 
 	private logCommandRegisterError(error: unknown, name: string, type: string) {
