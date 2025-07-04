@@ -6,8 +6,8 @@ import { ContextMenuCommand, HybridCommand, loadCommandRegistry, PrefixCommand, 
 import { loadListenerRegistry } from "./Listener.js";
 import CommandManager from "../libs/CommandManager.js";
 
-export default class ZentBot<R extends boolean = boolean> extends Client<R> {
-	public commandManager: CommandManager;
+export default class ZentBot<Ready extends boolean = boolean> extends Client<Ready> {
+	public commandManager: CommandManager<Ready>;
 
 	public botWebhooks: Collection<Snowflake, Webhook> = new Collection(); // key is channel ID
 
@@ -22,7 +22,7 @@ export default class ZentBot<R extends boolean = boolean> extends Client<R> {
 			],
 		});
 
-		this.commandManager = new CommandManager();
+		this.commandManager = new CommandManager(this);
 	}
 
 	public async initialize() {
@@ -45,6 +45,8 @@ export default class ZentBot<R extends boolean = boolean> extends Client<R> {
 
 		for (const constructor of registry) {
 			const instance = new constructor();
+
+			instance["client"] = this as ZentBot<true>;
 
 			this[constructor.once ? "once" : "on"](
 				constructor.eventName,

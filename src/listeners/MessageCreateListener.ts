@@ -8,7 +8,9 @@ const PREFIX = "_";
 
 @useListener("messageCreate")
 export default class MessageCreateListener extends Listener<"messageCreate"> {
-	public async execute(client: ZentBot<true>, message: Message) {
+	public async execute(message: Message) {
+		const { client } = this;
+
 		if (!message.inGuild() || message.author.bot) {
 			return;
 		}
@@ -32,9 +34,9 @@ export default class MessageCreateListener extends Listener<"messageCreate"> {
 
 		try {
 			if (command instanceof HybridCommand) {
-				await command.execute(client, new PrefixHybridContext(message), args);
+				await command.execute(new PrefixHybridContext(message), args);
 			} else {
-				await command.execute(client, message, args);
+				await command.execute(message, args);
 			}
 		} catch (error) {
 			console.error(`An error occurred while executing command '${commandName}':`, error);

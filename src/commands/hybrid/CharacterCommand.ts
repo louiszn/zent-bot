@@ -1,7 +1,6 @@
-import { Attachment, AttachmentBuilder, AutocompleteInteraction, ChatInputCommandInteraction, codeBlock, EmbedBuilder, InteractionContextType, Message, MessageCreateOptions, MessageFlags, SlashCommandBuilder, SlashCommandStringOption, User } from "discord.js";
+import { AttachmentBuilder, AutocompleteInteraction, EmbedBuilder, InteractionContextType, MessageCreateOptions, MessageFlags, SlashCommandBuilder, SlashCommandStringOption } from "discord.js";
 import { HybridCommand, HybridContext, useHybridCommand } from "../../base/Command.js";
 
-import ZentBot from "../../base/ZentBot.js";
 import prisma from "../../libs/prisma.js";
 import { extractId, sanitize } from "../../utils/string.js";
 import { Character } from "@prisma/client";
@@ -118,7 +117,7 @@ const getCharacterOption = (option: SlashCommandStringOption) =>
 	prefixTriggers: ["character", "char"],
 })
 export default class CharacterCommand extends HybridCommand {
-	public async autocomplete(client: ZentBot<true>, interaction: AutocompleteInteraction) {
+	public async autocomplete(interaction: AutocompleteInteraction) {
 		const focusedOption = interaction.options.getFocused(true);
 
 		if (focusedOption.name === "character") {
@@ -154,28 +153,28 @@ export default class CharacterCommand extends HybridCommand {
 		}
 	}
 
-	public async execute(client: ZentBot<true>, context: HybridContext, args: string[]) {
+	public async execute(context: HybridContext, args: string[]) {
 		const choice = context.isInteraction()
 			? context.source.options.getSubcommandGroup(false) || context.source.options.getSubcommand()
 			: args[1]
 
 		switch (choice) {
 			case "create":
-				await this.onCreate(client, context, args);
+				await this.onCreate(context, args);
 				break;
 			case "edit":
-				await this.onEdit(client, context, args);
+				await this.onEdit(context, args);
 				break;
 			case "list":
-				await this.onList(client, context, args);
+				await this.onList(context, args);
 				break;
 			case "info":
-				await this.onInfo(client, context, args);
+				await this.onInfo(context, args);
 				break;
 		}
 	}
 
-	private async onCreate(client: ZentBot<true>, context: HybridContext, args: string[]) {
+	private async onCreate(context: HybridContext, args: string[]) {
 		let tag: string;
 
 		if (context.isInteraction()) {
@@ -212,7 +211,7 @@ export default class CharacterCommand extends HybridCommand {
 		await context.send(`Created new character with tag \`${tag}\`. You can also change character's tag later.`);
 	}
 
-	private async onEdit(client: ZentBot<true>, context: HybridContext, args: string[]) {
+	private async onEdit(context: HybridContext, args: string[]) {
 		let character: Character | null;
 
 		if (context.isInteraction()) {
@@ -238,16 +237,16 @@ export default class CharacterCommand extends HybridCommand {
 
 		switch (choice) {
 			case "name":
-				await this.onNameEdit(client, context, args, character);
+				await this.onNameEdit(context, args, character);
 				break;
 			case "tag":
-				await this.onTagEdit(client, context, args, character);
+				await this.onTagEdit(context, args, character);
 				break;
 			case "prefix":
-				await this.onPrefixEdit(client, context, args, character);
+				await this.onPrefixEdit(context, args, character);
 				break;
 			case "avatar":
-				await this.onAvatarEdit(client, context, args, character);
+				await this.onAvatarEdit(context, args, character);
 				break;
 			default:
 				await context.send(`- \`_char edit [tag] name [...name]\`: Update character's name
@@ -258,7 +257,7 @@ export default class CharacterCommand extends HybridCommand {
 		}
 	}
 
-	private async onList(client: ZentBot<true>, context: HybridContext, args: string[]) {
+	private async onList(context: HybridContext, args: string[]) {
 		let user = context.user;
 
 		if (context.isInteraction()) {
@@ -268,7 +267,7 @@ export default class CharacterCommand extends HybridCommand {
 
 			if (userId) {
 				try {
-					user = await client.users.fetch(userId);
+					user = await this.client.users.fetch(userId);
 				} catch {
 					await context.send("Couldn't find that user");
 					return;
@@ -313,7 +312,7 @@ export default class CharacterCommand extends HybridCommand {
 		}
 	}
 
-	private async onInfo(client: ZentBot<true>, context: HybridContext, args: string[]) {
+	private async onInfo(context: HybridContext, args: string[]) {
 		let user = context.user;
 		let character: Character | null;
 
@@ -333,7 +332,7 @@ export default class CharacterCommand extends HybridCommand {
 				if (userId) {
 					// [user] [tag]
 					try {
-						user = await client.users.fetch(userId);
+						user = await this.client.users.fetch(userId);
 						characterTag = sanitize(arg2).toLowerCase();
 					} catch {
 						await context.send("Couldn't find that user.");
@@ -368,7 +367,7 @@ export default class CharacterCommand extends HybridCommand {
 		});
 	}
 
-	private async onNameEdit(client: ZentBot<true>, context: HybridContext, args: string[], character: Character) {
+	private async onNameEdit(context: HybridContext, args: string[], character: Character) {
 		let name: string;
 
 		if (context.isInteraction()) {
@@ -387,7 +386,7 @@ export default class CharacterCommand extends HybridCommand {
 		await context.send(`Successfully changed character name from \`${character.name || character.tag}\` to \`${name}\`.`);
 	}
 
-	private async onTagEdit(client: ZentBot<true>, context: HybridContext, args: string[], character: Character) {
+	private async onTagEdit(context: HybridContext, args: string[], character: Character) {
 		let newTag: string;
 
 		if (context.isInteraction()) {
@@ -413,7 +412,7 @@ export default class CharacterCommand extends HybridCommand {
 		await context.send(`Successfully changed character tag from \`${character.tag}\` to \`${newTag}\`.`);
 	}
 
-	private async onAvatarEdit(client: ZentBot<true>, context: HybridContext, args: string[], character: Character) {
+	private async onAvatarEdit(context: HybridContext, args: string[], character: Character) {
 		let avatarURL: string | null = null;
 
 		if (context.isInteraction()) {
@@ -472,7 +471,7 @@ export default class CharacterCommand extends HybridCommand {
 		});
 	}
 
-	private async onPrefixEdit(client: ZentBot<true>, context: HybridContext, args: string[], character: Character) {
+	private async onPrefixEdit(context: HybridContext, args: string[], character: Character) {
 		let prefix: string;
 
 		if (context.isInteraction()) {

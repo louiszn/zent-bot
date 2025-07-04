@@ -5,7 +5,9 @@ import { HybridCommand, SlashHybridContext } from "../base/Command.js";
 
 @useListener("interactionCreate")
 export default class InteractionCreateListener extends Listener<"interactionCreate"> {
-	public async execute(client: ZentBot<true> ,interaction: Interaction) {
+	public async execute(interaction: Interaction) {
+		const { client } = this;
+
 		if (interaction.isChatInputCommand()) {
 			if (!interaction.inCachedGuild()) {
 				return;
@@ -21,9 +23,9 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 
 			try {
 				if (command instanceof HybridCommand) {
-					await command.execute(client, new SlashHybridContext(interaction), []);
+					await command.execute(new SlashHybridContext(interaction), []);
 				} else {
-					await command.execute(client, interaction);
+					await command.execute(interaction);
 				}
 			} catch (error) {
 				await this.handleCommandInteractionError(interaction, error);
@@ -42,7 +44,7 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 			}
 
 			try {
-				await command.execute(client, interaction);
+				await command.execute(interaction);
 			} catch (error) {
 				await this.handleCommandInteractionError(interaction, error);
 			}
@@ -66,7 +68,7 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 			}
 
 			try {
-				await command.autocomplete(client, interaction);
+				await command.autocomplete(interaction);
 			} catch (error) {
 				console.error("Failed to respond autocomplete:", error);
 			}

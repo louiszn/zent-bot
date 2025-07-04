@@ -8,7 +8,7 @@ import { getWebhook } from "../../libs/webhook.js";
 
 @usePrefixCommand(["edit"])
 export default class DeleteCommand extends PrefixCommand {
-	public async execute(client: ZentBot<true>, message: Message<true>, args: string[]): Promise<void> {
+	public async execute(message: Message<true>, args: string[]): Promise<void> {
 		let targetMessage: Message<true> | undefined;
 
 		let newContent: string | undefined;
@@ -59,7 +59,7 @@ export default class DeleteCommand extends PrefixCommand {
 			return;
 		}
 
-		const webhook = await getWebhook(client, message.channel);
+		const webhook = await getWebhook(message.channel);
 
 		if (!webhook || targetMessage.webhookId !== webhook.id) {
 			await message.channel.send("Couldn't edit this message since the original webhook is deleted.");

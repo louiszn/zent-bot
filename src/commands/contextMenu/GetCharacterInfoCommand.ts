@@ -11,7 +11,7 @@ import { getCharacterInformationEmbed } from "../../libs/character.js";
 		.setType(ApplicationCommandType.Message)
 )
 export default class GetCharacterInfoCommand extends ContextMenuCommand {
-	public async execute(client: ZentBot<true>, interaction: MessageContextMenuCommandInteraction<"cached">) {
+	public async execute(interaction: MessageContextMenuCommandInteraction<"cached">) {
 		const characterMessage = await prisma.message.findFirst({
 			where: { id: interaction.targetMessage.id },
 			include: { character: true },

@@ -7,7 +7,7 @@ import prisma from "../../libs/prisma.js";
 
 @usePrefixCommand(["delete", "del"])
 export default class DeleteCommand extends PrefixCommand {
-	public async execute(client: ZentBot<true>, message: Message<true>, args: string[]): Promise<void> {
+	public async execute(message: Message<true>, args: string[]): Promise<void> {
 		let targetMessage: Message<true> | undefined;
 
 		if (args[1]) {

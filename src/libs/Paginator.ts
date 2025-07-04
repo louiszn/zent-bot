@@ -34,7 +34,8 @@ export class Paginator {
 		collector.on("end", () => this.onEnd(collector, message));
 		collector.on("ignore", async (interaction) => {
 			await interaction.reply({
-				content: "This button is not for you!"
+				content: "This button is not for you!",
+				flags: MessageFlags.Ephemeral,
 			});
 		});
 	}

@@ -28,26 +28,27 @@ const slashCommandsRegistry: SlashCommandConstructor[] = [];
 const contextMenuCommandsRegistry: ContextMenuCommandConstructor[] = [];
 const hybridCommandsRegistry: HybridCommandConstructor[] = [];
 
-export interface BaseCommand {
-	execute(client: ZentBot<true>, ...args: any[]): Promise<void>;
+export abstract class BaseCommand {
+	protected client!: ZentBot<true>;
+	abstract execute(...args: any[]): Promise<void>;
 }
 
-export abstract class PrefixCommand implements BaseCommand {
-	abstract execute(client: ZentBot<true>, message: Message<true>, args: string[]): Promise<void>;
+export abstract class PrefixCommand extends BaseCommand {
+	abstract execute(message: Message<true>, args: string[]): Promise<void>;
 }
 
-export abstract class SlashCommand implements BaseCommand {
-	abstract execute(client: ZentBot<true>, interaction: ChatInputCommandInteraction<"cached">): Promise<void>;
-	autocomplete?(client: ZentBot<true>, interaction: AutocompleteInteraction<"cached">): Promise<void>;
+export abstract class SlashCommand extends BaseCommand {
+	abstract execute(interaction: ChatInputCommandInteraction<"cached">): Promise<void>;
+	autocomplete?(interaction: AutocompleteInteraction<"cached">): Promise<void>;
 }
 
-export abstract class ContextMenuCommand implements BaseCommand {
-	abstract execute(client: ZentBot<true>, interaction: UserContextMenuCommandInteraction | MessageContextMenuCommandInteraction): Promise<void>;
+export abstract class ContextMenuCommand extends BaseCommand {
+	abstract execute(interaction: UserContextMenuCommandInteraction | MessageContextMenuCommandInteraction): Promise<void>;
 }
 
-export abstract class HybridCommand implements BaseCommand {
-	abstract execute(client: ZentBot<true>, context: HybridContext, args: string[]): Promise<void>;
-	autocomplete?(client: ZentBot<true>, interaction: AutocompleteInteraction<"cached">): Promise<void>;
+export abstract class HybridCommand extends BaseCommand {
+	abstract execute(context: HybridContext, args: string[]): Promise<void>;
+	autocomplete?(interaction: AutocompleteInteraction<"cached">): Promise<void>;
 }
 
 export interface ContextResponse {

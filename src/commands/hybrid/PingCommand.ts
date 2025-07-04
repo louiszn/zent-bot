@@ -10,7 +10,7 @@ import ZentBot from "../../base/ZentBot.js";
 	prefixTriggers: ["ping"],
 })
 export default class PingCommand extends HybridCommand {
-	public async execute(client: ZentBot<true>, context: HybridContext) {
-		await context.send(`Pong! ${client.ws.ping}ms!`);
+	public async execute(context: HybridContext) {
+		await context.send(`Pong! ${this.client.ws.ping}ms!`);
 	}
 }

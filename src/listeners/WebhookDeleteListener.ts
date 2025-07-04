@@ -1,11 +1,11 @@
 import { GuildAuditLogsEntry, Guild, AuditLogEvent } from "discord.js";
 import { Listener, useListener } from "../base/Listener.js";
 
-import ZentBot from "../base/ZentBot.js";
-
 @useListener("guildAuditLogEntryCreate")
 export default class WebhookDeleteListener extends Listener<"guildAuditLogEntryCreate"> {
-	public async execute(client: ZentBot<true>, entry: GuildAuditLogsEntry, guild: Guild): Promise<void> {
+	public async execute(entry: GuildAuditLogsEntry, guild: Guild): Promise<void> {
+		const { client } = this;
+
 		if (entry.action !== AuditLogEvent.WebhookDelete) {
 			return;
 		}

@@ -10,7 +10,7 @@ import prisma from "../../libs/prisma.js";
 		.setType(ApplicationCommandType.Message)
 )
 export default class DeleteCharMessageCommand extends ContextMenuCommand {
-	public async execute(client: ZentBot<true>, interaction: MessageContextMenuCommandInteraction) {
+	public async execute(interaction: MessageContextMenuCommandInteraction) {
 		const { targetMessage } = interaction;
 
 		if (!targetMessage.webhookId) {

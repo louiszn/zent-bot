@@ -1,10 +1,17 @@
 import { Collection } from "discord.js";
 import { SlashCommand, HybridCommand, PrefixCommand, ContextMenuCommand, loadCommandRegistry, BaseCommand } from "../base/Command.js";
+import ZentBot from "../base/ZentBot.js";
 
-export default class CommandManager {
+export default class CommandManager<Ready extends boolean = boolean> {
 	public slashCommands: Collection<string, SlashCommand | HybridCommand> = new Collection();
 	public prefixCommands: Collection<string, PrefixCommand | HybridCommand> = new Collection();
 	public contextMenuCommands: Collection<string, ContextMenuCommand> = new Collection();
+
+	public client: ZentBot<Ready>
+
+	public constructor(client: ZentBot<Ready>) {
+		this.client = client;
+	}
 
 	public async loadCommands(): Promise<void> {
 		const {
@@ -20,6 +27,8 @@ export default class CommandManager {
 			try {
 				const instance = new constructor();
 
+				instance["client"] = this.client as ZentBot<true>;
+
 				if (this.registerSlashCommand(constructor.data.name, instance)) {
 					commandCount++;
 				}
@@ -31,6 +40,8 @@ export default class CommandManager {
 		for (const constructor of prefixCommandsRegistry) {
 			try {
 				const instance = new constructor();
+
+				instance["client"] = this.client as ZentBot<true>;
 
 				if (this.registerPrefixCommand(constructor.triggers, instance)) {
 					commandCount++;
@@ -44,6 +55,8 @@ export default class CommandManager {
 			try {
 				const instance = new constructor();
 
+				instance["client"] = this.client as ZentBot<true>;
+
 				if (this.registerContextMenuCommand(constructor.data.name, instance)) {
 					commandCount++;
 				}
@@ -55,6 +68,8 @@ export default class CommandManager {
 		for (const constructor of hybridCommandsRegistry) {
 			try {
 				const instance = new constructor();
+
+				instance["client"] = this.client as ZentBot<true>;
 
 				const {
 					applicationCommandData: { name },

@@ -9,7 +9,7 @@ import { getWebhook } from "../libs/webhook.js";
 
 @useListener("messageCreate")
 export default class CharacterMessageListener extends Listener<"messageCreate"> {
-	public async execute(client: ZentBot<true>, message: Message) {
+	public async execute(message: Message) {
 		if (message.author.bot || !message.inGuild()) {
 			return;
 		}
@@ -68,7 +68,7 @@ export default class CharacterMessageListener extends Listener<"messageCreate"> 
 		let webhook: Webhook | null = null;
 
 		try {
-			webhook = await getWebhook(client, message.channel);
+			webhook = await getWebhook(message.channel);
 		} catch (error) {
 			console.error("Failed to fetch or create a new webhook:", error);
 		}

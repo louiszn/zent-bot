@@ -1,7 +1,9 @@
 import { GuildTextBasedChannel, Webhook } from "discord.js";
 import ZentBot from "../base/ZentBot.js";
 
-export async function getWebhook(client: ZentBot<true>, channel: GuildTextBasedChannel) {
+export async function getWebhook(channel: GuildTextBasedChannel) {
+	const client = channel.client as ZentBot<true>;
+
 	let baseChannel;
 
 	// Threads can send wehook messages using its parent channel and threadId option.
