@@ -5,7 +5,7 @@ import {
 	InteractionContextType,
 	MessageFlags,
 } from "discord.js";
-import { ContextMenuCommand, useContextMenuCommand } from "../../base/Command.js";
+import { ContextMenuCommand, useContextMenuCommand } from "../../base/command/Command.js";
 import prisma from "../../libs/prisma.js";
 import { getCharacterInformationEmbed } from "../../libs/character.js";
 

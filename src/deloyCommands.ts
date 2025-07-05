@@ -3,17 +3,16 @@ import { REST, Routes } from "discord.js";
 
 import config from "./config.js";
 
-import { loadCommandRegistry } from "./base/Command.js";
+import CommandRegistry from "./base/command/CommandRegistry.js";
 
-const { slashCommandsRegistry, contextMenuCommandsRegistry, hybridCommandsRegistry } =
-	await loadCommandRegistry();
+await CommandRegistry.loadModules();
 
 const rest = new REST({ version: "10" }).setToken(config.botToken);
 
 const commandDatas: RESTPostAPIApplicationCommandsJSONBody[] = [
-	...slashCommandsRegistry.map((cmd) => cmd.data),
-	...contextMenuCommandsRegistry.map((cmd) => cmd.data),
-	...hybridCommandsRegistry.map((cmd) => cmd.applicationCommandData),
+	...CommandRegistry.getSlashCommands().map(({ data }) => data),
+	...CommandRegistry.getContextMenuCommands().map(({ data }) => data),
+	...CommandRegistry.getHybridCommands().map(({ applicationCommandData }) => applicationCommandData),
 ];
 
 try {

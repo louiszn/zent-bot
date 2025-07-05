@@ -10,9 +10,10 @@ import type {
 	HybridCommandConstructor,
 	CommandConstructor,
 	Command,
-} from "../base/Command.js";
-import { loadCommandRegistry } from "../base/Command.js";
-import type ZentBot from "../base/ZentBot.js";
+} from "./Command.js";
+
+import type ZentBot from "../ZentBot.js";
+import CommandRegistry from "./CommandRegistry.js";
 
 export default class CommandManager<Ready extends boolean = boolean> {
 	public slashCommands: Collection<string, SlashCommand | HybridCommand> = new Collection();
@@ -22,49 +23,66 @@ export default class CommandManager<Ready extends boolean = boolean> {
 	public constructor(public client: ZentBot<Ready>) {}
 
 	public async loadCommands(): Promise<void> {
-		const {
-			slashCommandsRegistry,
-			prefixCommandsRegistry,
-			contextMenuCommandsRegistry,
-			hybridCommandsRegistry,
-		} = await loadCommandRegistry();
+		await CommandRegistry.loadModules();
 
-		let commandCount = 0;
+		const slashCommandsRegistry = CommandRegistry.getSlashCommands();
+		const prefixCommandsRegistry = CommandRegistry.getPrefixCommands();
+		const contextMenuCommandsRegistry = CommandRegistry.getContextMenuCommands();
+		const hybridCommandsRegistry = CommandRegistry.getHybridCommands();
 
-		commandCount += this.registerCommandType<SlashCommand, SlashCommandConstructor>(
+		const slashCommandCount = this.registerCommandType<SlashCommand, SlashCommandConstructor>(
 			slashCommandsRegistry,
 			"slash",
-			(instance, constructor) => this.registerSlashCommand(constructor.data.name, instance),
+			(instance, { data: { name } }) => this.registerSlashCommand(name, instance),
 		);
 
-		commandCount += this.registerCommandType<PrefixCommand, PrefixCommandConstructor>(
+		const prefixCommandCount = this.registerCommandType<PrefixCommand, PrefixCommandConstructor>(
 			prefixCommandsRegistry,
 			"prefix",
-			(instance, constructor) => this.registerPrefixCommand(constructor.triggers, instance),
+			(instance, { triggers }) => this.registerPrefixCommand(triggers, instance),
 		);
 
-		commandCount += this.registerCommandType<ContextMenuCommand, ContextMenuCommandConstructor>(
-			contextMenuCommandsRegistry,
-			"context menu",
-			(instance, constructor) => this.registerContextMenuCommand(constructor.data.name, instance),
+		const contextMenuCommandCount = this.registerCommandType<
+			ContextMenuCommand,
+			ContextMenuCommandConstructor
+		>(contextMenuCommandsRegistry, "context menu", (instance, { data: { name } }) =>
+			this.registerContextMenuCommand(name, instance),
 		);
 
-		commandCount += this.registerCommandType<HybridCommand, HybridCommandConstructor>(
+		const hybridCommandCount = this.registerCommandType<HybridCommand, HybridCommandConstructor>(
 			hybridCommandsRegistry,
 			"hybrid",
-			(instance, constructor) =>
-				this.registerHybridCommand(
-					constructor.applicationCommandData.name,
-					constructor.prefixTriggers,
-					instance,
-				),
+			(instance, { applicationCommandData: { name }, prefixTriggers }) =>
+				this.registerHybridCommand(name, prefixTriggers, instance),
 		);
 
-		console.log(`Loaded ${commandCount} commands`);
+		const registryCount = [
+			slashCommandsRegistry,
+			prefixCommandsRegistry,
+			contextMenuCommandsRegistry,
+			hybridCommandsRegistry
+		].reduce((total, registry) => total + registry.length, 0);
+
+		const commandCount = [
+			slashCommandCount,
+			prefixCommandCount,
+			contextMenuCommandCount,
+			hybridCommandCount
+		].reduce((total, count) => total + count, 0);
+
+		console.log(
+			[
+				`✅ Registered total ${commandCount}/${registryCount} commands:`,
+				`+ 📤 Slash:        ${slashCommandCount}/${slashCommandsRegistry.length}`,
+				`+ 📝 Prefix:       ${prefixCommandCount}/${prefixCommandsRegistry.length}`,
+				`+ 📋 Context Menu: ${contextMenuCommandCount}/${contextMenuCommandsRegistry.length}`,
+				`+ ⚡ Hybrid:       ${hybridCommandCount}/${hybridCommandsRegistry.length}`,
+			].join("\n"),
+		);
 	}
 
 	private registerCommandType<T extends Command, C extends CommandConstructor>(
-		registry: C[],
+		registry: readonly C[],
 		type: string,
 		registerFn: (instance: T, constructor: C) => boolean,
 	) {

@@ -1,7 +1,7 @@
 import type { CommandInteraction, Interaction } from "discord.js";
 import { DiscordAPIError, MessageFlags, RESTJSONErrorCodes } from "discord.js";
-import { Listener, useListener } from "../base/Listener.js";
-import { HybridCommand, SlashHybridContext } from "../base/Command.js";
+import { Listener, useListener } from "../base/listener/Listener.js";
+import { HybridCommand, SlashHybridContext } from "../base/command/Command.js";
 
 @useListener("interactionCreate")
 export default class InteractionCreateListener extends Listener<"interactionCreate"> {

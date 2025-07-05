@@ -1,6 +1,6 @@
 import type { Message, Webhook } from "discord.js";
 import { PermissionFlagsBits } from "discord.js";
-import { Listener, useListener } from "../base/Listener.js";
+import { Listener, useListener } from "../base/listener/Listener.js";
 
 import prisma from "../libs/prisma.js";
 

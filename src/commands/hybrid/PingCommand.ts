@@ -1,6 +1,6 @@
 import { InteractionContextType, SlashCommandBuilder } from "discord.js";
-import type { HybridContext } from "../../base/Command.js";
-import { HybridCommand, useHybridCommand } from "../../base/Command.js";
+import type { HybridContext } from "../../base/command/Command.js";
+import { HybridCommand, useHybridCommand } from "../../base/command/Command.js";
 
 @useHybridCommand({
 	applicationCommandData: new SlashCommandBuilder()

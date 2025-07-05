@@ -1,7 +1,7 @@
 import type { Message } from "discord.js";
-import { Listener, useListener } from "../base/Listener.js";
+import { Listener, useListener } from "../base/listener/Listener.js";
 
-import { HybridCommand, PrefixHybridContext } from "../base/Command.js";
+import { HybridCommand, PrefixHybridContext } from "../base/command/Command.js";
 
 const PREFIX = "_";
 

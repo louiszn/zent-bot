@@ -3,11 +3,15 @@ import { Client, Collection, GatewayIntentBits } from "discord.js";
 
 import config from "../config.js";
 
-import { loadListenerRegistry } from "./Listener.js";
-import CommandManager from "../libs/CommandManager.js";
+import CommandManager from "./command/CommandManager.js";
+
+import type { Component } from "./Component.js";
+import ListenerRegistry from "./listener/ListenerRegistry.js";
 
 export default class ZentBot<Ready extends boolean = boolean> extends Client<Ready> {
 	public commandManager: CommandManager<Ready>;
+
+	public components: Collection<string, Component>;
 
 	public botWebhooks: Collection<Snowflake, Webhook> = new Collection(); // key is channel ID
 
@@ -23,6 +27,7 @@ export default class ZentBot<Ready extends boolean = boolean> extends Client<Rea
 		});
 
 		this.commandManager = new CommandManager(this);
+		this.components = new Collection();
 	}
 
 	public async initialize() {
@@ -38,19 +43,25 @@ export default class ZentBot<Ready extends boolean = boolean> extends Client<Rea
 	private async loadListeners() {
 		let count = 0;
 
-		const registry = await loadListenerRegistry();
+		await ListenerRegistry.loadModules();
 
-		for (const constructor of registry) {
-			const instance = new constructor(this as ZentBot<true>);
+		const constructors = ListenerRegistry.getListeners();
 
-			this[constructor.once ? "once" : "on"](constructor.eventName, (...args) =>
-				instance.execute(...args),
-			);
+		for (const constructor of constructors) {
+			try {
+				const instance = new constructor(this as ZentBot<true>);
 
-			count++;
+				this[constructor.once ? "once" : "on"](constructor.eventName, (...args) =>
+					instance.execute(...args),
+				);
+
+				count++;
+			} catch (error) {
+				console.error(`An error occurred while registering listener '${constructor.name}':`, error);
+			}
 		}
 
-		console.log(`Loaded ${count} listeners`);
+		console.log(`✅ Registered total ${count}/${constructors.length} listeners`);
 	}
 
 	private async onReady(this: ZentBot<true>) {

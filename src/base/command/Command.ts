@@ -18,15 +18,8 @@ import type {
 
 import { ChatInputCommandInteraction, Message } from "discord.js";
 
-import fg from "fast-glob";
-import { pathToFileURL } from "node:url";
-
-import type ZentBot from "./ZentBot.js";
-
-const prefixCommandsRegistry: PrefixCommandConstructor[] = [];
-const slashCommandsRegistry: SlashCommandConstructor[] = [];
-const contextMenuCommandsRegistry: ContextMenuCommandConstructor[] = [];
-const hybridCommandsRegistry: HybridCommandConstructor[] = [];
+import type ZentBot from "../ZentBot.js";
+import CommandRegistry from "./CommandRegistry.js";
 
 export abstract class BaseCommand {
 	public constructor(protected client: ZentBot<true>) {}
@@ -185,22 +178,31 @@ export type CommandConstructor =
 
 export function usePrefixCommand(triggers: string[]) {
 	return function <T extends typeof PrefixCommand>(constructor: T) {
-		(constructor as T & PrefixCommandConstructor).triggers = triggers;
-		prefixCommandsRegistry.push(constructor as T & PrefixCommandConstructor);
+		const correctConstructor = constructor as T & PrefixCommandConstructor;
+
+		correctConstructor.triggers = triggers;
+
+		CommandRegistry.addPrefixCommand(correctConstructor);
 	};
 }
 
 export function useSlashCommand(data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder) {
 	return function <T extends typeof SlashCommand>(constructor: T) {
-		(constructor as T & SlashCommandConstructor).data = data.toJSON();
-		slashCommandsRegistry.push(constructor as T & SlashCommandConstructor);
+		const correctConstructor = constructor as T & SlashCommandConstructor;
+
+		correctConstructor.data = data.toJSON();
+
+		CommandRegistry.addSlashCommand(constructor as T & SlashCommandConstructor);
 	};
 }
 
 export function useContextMenuCommand(data: ContextMenuCommandBuilder) {
 	return function <T extends typeof ContextMenuCommand>(constructor: T) {
-		(constructor as T & ContextMenuCommandConstructor).data = data.toJSON();
-		contextMenuCommandsRegistry.push(constructor as T & ContextMenuCommandConstructor);
+		const correctConstructor = constructor as T & ContextMenuCommandConstructor;
+
+		correctConstructor.data = data.toJSON();
+
+		CommandRegistry.addContextMenuCommand(correctConstructor);
 	};
 }
 
@@ -214,25 +216,6 @@ export function useHybridCommand(options: {
 		correctConstructor.applicationCommandData = options.applicationCommandData.toJSON();
 		correctConstructor.prefixTriggers = options.prefixTriggers;
 
-		hybridCommandsRegistry.push(correctConstructor);
-	};
-}
-
-export async function loadCommandRegistry() {
-	const files = await fg.glob("dist/commands/**/*.js");
-
-	for (const file of files) {
-		try {
-			await import(pathToFileURL(file).toString());
-		} catch (error) {
-			console.error(`Failed to load file: ${file}`, error);
-		}
-	}
-
-	return {
-		prefixCommandsRegistry,
-		slashCommandsRegistry,
-		contextMenuCommandsRegistry,
-		hybridCommandsRegistry,
+		CommandRegistry.addHybridCommand(correctConstructor);
 	};
 }

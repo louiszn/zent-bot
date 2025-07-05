@@ -10,8 +10,8 @@ import {
 	MessageFlags,
 	SlashCommandBuilder,
 } from "discord.js";
-import type { HybridContext } from "../../base/Command.js";
-import { HybridCommand, useHybridCommand } from "../../base/Command.js";
+import type { HybridContext } from "../../base/command/Command.js";
+import { HybridCommand, useHybridCommand } from "../../base/command/Command.js";
 
 import prisma from "../../libs/prisma.js";
 import { extractId, sanitize } from "../../utils/string.js";

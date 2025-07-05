@@ -1,6 +1,6 @@
 import type { GuildAuditLogsEntry } from "discord.js";
 import { AuditLogEvent } from "discord.js";
-import { Listener, useListener } from "../base/Listener.js";
+import { Listener, useListener } from "../base/listener/Listener.js";
 
 @useListener("guildAuditLogEntryCreate")
 export default class WebhookDeleteListener extends Listener<"guildAuditLogEntryCreate"> {

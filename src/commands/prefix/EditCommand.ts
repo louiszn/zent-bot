@@ -1,5 +1,5 @@
 import type { Message } from "discord.js";
-import { PrefixCommand, usePrefixCommand } from "../../base/Command.js";
+import { PrefixCommand, usePrefixCommand } from "../../base/command/Command.js";
 
 import { extractId } from "../../utils/string.js";
 import prisma from "../../libs/prisma.js";

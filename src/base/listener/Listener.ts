@@ -1,11 +1,7 @@
 import type { ClientEvents } from "discord.js";
 
-import fg from "fast-glob";
-import { pathToFileURL } from "node:url";
-
-import type ZentBot from "./ZentBot.js";
-
-const listenersRegistry: ListenerConstructor<keyof ClientEvents>[] = [];
+import type ZentBot from "../ZentBot.js";
+import ListenerRegistry from "./ListenerRegistry.js";
 
 export abstract class Listener<E extends keyof ClientEvents> {
 	public constructor(protected client: ZentBot<true>) {}
@@ -26,20 +22,6 @@ export function useListener<E extends keyof ClientEvents>(event: E, once = false
 		correctConstructor.eventName = event;
 		correctConstructor.once = once;
 
-		listenersRegistry.push(correctConstructor);
+		ListenerRegistry.addListener(correctConstructor);
 	};
-}
-
-export async function loadListenerRegistry() {
-	const files = await fg.glob("dist/listeners/**/*.js");
-
-	for (const file of files) {
-		try {
-			await import(pathToFileURL(file).toString());
-		} catch (error) {
-			console.error(`Failed to load file: ${file}`, error);
-		}
-	}
-
-	return listenersRegistry;
 }
