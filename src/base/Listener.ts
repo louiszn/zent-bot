@@ -8,12 +8,13 @@ import ZentBot from "./ZentBot.js";
 const listenersRegistry: ListenerConstructor<any>[] = [];
 
 export abstract class Listener<E extends keyof ClientEvents> {
-	protected client!: ZentBot<true>;
+	public constructor(protected client: ZentBot<true>) {}
+
 	public abstract execute(...args: ClientEvents[E]): Promise<void>;
 }
 
 export interface ListenerConstructor<E extends keyof ClientEvents> {
-	new(): Listener<E>;
+	new(client: ZentBot<true>): Listener<E>;
 	eventName: E;
 	once: boolean;
 }

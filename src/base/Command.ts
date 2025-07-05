@@ -29,7 +29,8 @@ const contextMenuCommandsRegistry: ContextMenuCommandConstructor[] = [];
 const hybridCommandsRegistry: HybridCommandConstructor[] = [];
 
 export abstract class BaseCommand {
-	protected client!: ZentBot<true>;
+	public constructor(protected client: ZentBot<true>) {}
+
 	abstract execute(...args: any[]): Promise<void>;
 }
 
@@ -50,6 +51,8 @@ export abstract class HybridCommand extends BaseCommand {
 	abstract execute(context: HybridContext, args: string[]): Promise<void>;
 	autocomplete?(interaction: AutocompleteInteraction<"cached">): Promise<void>;
 }
+
+export type Command = PrefixCommand | SlashCommand | ContextMenuCommand | HybridCommand;
 
 export interface ContextResponse {
 	message?: Message<true>;
@@ -158,22 +161,22 @@ export class PrefixHybridContext extends BaseHybridContext {
 export type HybridContext = SlashHybridContext | PrefixHybridContext;
 
 export interface PrefixCommandConstructor {
-	new(): PrefixCommand;
+	new(client: ZentBot<true>): PrefixCommand;
 	triggers: string[]
 }
 
 export interface SlashCommandConstructor {
-	new(): SlashCommand;
+	new(client: ZentBot<true>): SlashCommand;
 	data: RESTPostAPIApplicationCommandsJSONBody;
 }
 
 export interface ContextMenuCommandConstructor {
-	new(): ContextMenuCommand;
+	new(client: ZentBot<true>): ContextMenuCommand;
 	data: RESTPostAPIApplicationCommandsJSONBody;
 }
 
 export interface HybridCommandConstructor {
-	new(): HybridCommand;
+	new(client: ZentBot<true>): HybridCommand;
 	applicationCommandData: RESTPostAPIApplicationCommandsJSONBody;
 	prefixTriggers: string[];
 }

@@ -44,13 +44,11 @@ export default class ZentBot<Ready extends boolean = boolean> extends Client<Rea
 		const registry = await loadListenerRegistry();
 
 		for (const constructor of registry) {
-			const instance = new constructor();
-
-			instance["client"] = this as ZentBot<true>;
+			const instance = new constructor(this as ZentBot<true>);
 
 			this[constructor.once ? "once" : "on"](
 				constructor.eventName,
-				(...args) => instance.execute(this as ZentBot<true>, ...args)
+				(...args) => instance.execute(...args)
 			);
 
 			count++;

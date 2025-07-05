@@ -1,5 +1,5 @@
 import { Collection } from "discord.js";
-import { SlashCommand, HybridCommand, PrefixCommand, ContextMenuCommand, loadCommandRegistry, BaseCommand, SlashCommandConstructor, PrefixCommandConstructor, ContextMenuCommandConstructor, HybridCommandConstructor, CommandConstructor } from "../base/Command.js";
+import { SlashCommand, HybridCommand, PrefixCommand, ContextMenuCommand, loadCommandRegistry, BaseCommand, SlashCommandConstructor, PrefixCommandConstructor, ContextMenuCommandConstructor, HybridCommandConstructor, CommandConstructor, Command } from "../base/Command.js";
 import ZentBot from "../base/ZentBot.js";
 
 export default class CommandManager<Ready extends boolean = boolean> {
@@ -7,11 +7,7 @@ export default class CommandManager<Ready extends boolean = boolean> {
 	public prefixCommands: Collection<string, PrefixCommand | HybridCommand> = new Collection();
 	public contextMenuCommands: Collection<string, ContextMenuCommand> = new Collection();
 
-	public client: ZentBot<Ready>
-
-	public constructor(client: ZentBot<Ready>) {
-		this.client = client;
-	}
+	public constructor(public client: ZentBot<Ready>) {}
 
 	public async loadCommands(): Promise<void> {
 		const {
@@ -54,7 +50,7 @@ export default class CommandManager<Ready extends boolean = boolean> {
 		console.log(`Loaded ${commandCount} commands`);
 	}
 
-	private registerCommandType<T extends BaseCommand, C extends CommandConstructor>(
+	private registerCommandType<T extends Command, C extends CommandConstructor>(
 		registry: C[],
 		type: string,
 		registerFn: (instance: T, constructor: C) => boolean
@@ -63,9 +59,7 @@ export default class CommandManager<Ready extends boolean = boolean> {
 
 		for (const constructor of registry) {
 			try {
-				const instance = new constructor() as T;
-				
-				instance["client"] = this.client as ZentBot<true>;
+				const instance = new constructor(this.client as ZentBot<true>) as T & C;
 
 				if (registerFn(instance, constructor)) {
 					count++;
@@ -114,7 +108,7 @@ export default class CommandManager<Ready extends boolean = boolean> {
 		return true;
 	}
 
-	private registerInCollection<T extends BaseCommand>(
+	private registerInCollection<T extends Command>(
 		collection: Collection<string, T>,
 		key: string,
 		instance: T,
