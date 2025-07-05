@@ -5,7 +5,7 @@ export default tseslint.config(eslint.configs.recommended, tseslint.configs.reco
 	rules: {
 		semi: "error",
 		quotes: ["error", "double"],
-		indent: ["error", "tab"],
+		indent: ["error", "tab", { "SwitchCase": 1 }],
 		"@typescript-eslint/consistent-type-imports": "error",
 	},
 });
