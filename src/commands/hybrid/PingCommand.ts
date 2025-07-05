@@ -1,6 +1,6 @@
 import { InteractionContextType, SlashCommandBuilder } from "discord.js";
-import { HybridCommand, HybridContext, useHybridCommand } from "../../base/Command.js";
-import ZentBot from "../../base/ZentBot.js";
+import type { HybridContext } from "../../base/Command.js";
+import { HybridCommand, useHybridCommand } from "../../base/Command.js";
 
 @useHybridCommand({
 	applicationCommandData: new SlashCommandBuilder()

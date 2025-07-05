@@ -1,20 +1,22 @@
-import {
-	ActionRowBuilder,
-	ButtonBuilder,
+import type {
 	ButtonInteraction,
-	ButtonStyle,
-	ComponentType,
 	InteractionCollector,
 	InteractionUpdateOptions,
 	Message,
 	MessageCreateOptions,
 	MessageEditOptions,
+} from "discord.js";
+import {
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonStyle,
+	ComponentType,
 	MessageFlags,
 	ModalBuilder,
 	TextInputBuilder,
 	TextInputStyle,
 } from "discord.js";
-import { HybridContext } from "../base/Command.js";
+import type { HybridContext } from "../base/Command.js";
 
 interface PaginationOptions {
 	pages: MessageCreateOptions[];

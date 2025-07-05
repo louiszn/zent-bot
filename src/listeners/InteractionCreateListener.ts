@@ -1,12 +1,6 @@
-import {
-	CommandInteraction,
-	DiscordAPIError,
-	Interaction,
-	MessageFlags,
-	RESTJSONErrorCodes,
-} from "discord.js";
+import type { CommandInteraction, Interaction } from "discord.js";
+import { DiscordAPIError, MessageFlags, RESTJSONErrorCodes } from "discord.js";
 import { Listener, useListener } from "../base/Listener.js";
-import ZentBot from "../base/ZentBot.js";
 import { HybridCommand, SlashHybridContext } from "../base/Command.js";
 
 @useListener("interactionCreate")

@@ -1,7 +1,6 @@
-import { Message } from "discord.js";
+import type { Message } from "discord.js";
 import { Listener, useListener } from "../base/Listener.js";
 
-import ZentBot from "../base/ZentBot.js";
 import { HybridCommand, PrefixHybridContext } from "../base/Command.js";
 
 const PREFIX = "_";

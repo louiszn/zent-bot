@@ -1,12 +1,11 @@
+import type { MessageContextMenuCommandInteraction } from "discord.js";
 import {
 	ApplicationCommandType,
 	ContextMenuCommandBuilder,
 	InteractionContextType,
-	MessageContextMenuCommandInteraction,
 	MessageFlags,
 } from "discord.js";
 import { ContextMenuCommand, useContextMenuCommand } from "../../base/Command.js";
-import ZentBot from "../../base/ZentBot.js";
 import prisma from "../../libs/prisma.js";
 import { getCharacterInformationEmbed } from "../../libs/character.js";
 

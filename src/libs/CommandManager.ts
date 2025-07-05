@@ -1,11 +1,9 @@
 import { Collection } from "discord.js";
-import {
+import type {
 	SlashCommand,
 	HybridCommand,
 	PrefixCommand,
 	ContextMenuCommand,
-	loadCommandRegistry,
-	BaseCommand,
 	SlashCommandConstructor,
 	PrefixCommandConstructor,
 	ContextMenuCommandConstructor,
@@ -13,7 +11,8 @@ import {
 	CommandConstructor,
 	Command,
 } from "../base/Command.js";
-import ZentBot from "../base/ZentBot.js";
+import { loadCommandRegistry } from "../base/Command.js";
+import type ZentBot from "../base/ZentBot.js";
 
 export default class CommandManager<Ready extends boolean = boolean> {
 	public slashCommands: Collection<string, SlashCommand | HybridCommand> = new Collection();

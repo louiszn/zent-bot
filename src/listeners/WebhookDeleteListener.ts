@@ -1,9 +1,10 @@
-import { GuildAuditLogsEntry, Guild, AuditLogEvent } from "discord.js";
+import type { GuildAuditLogsEntry } from "discord.js";
+import { AuditLogEvent } from "discord.js";
 import { Listener, useListener } from "../base/Listener.js";
 
 @useListener("guildAuditLogEntryCreate")
 export default class WebhookDeleteListener extends Listener<"guildAuditLogEntryCreate"> {
-	public async execute(entry: GuildAuditLogsEntry, guild: Guild): Promise<void> {
+	public async execute(entry: GuildAuditLogsEntry): Promise<void> {
 		const { client } = this;
 
 		if (entry.action !== AuditLogEvent.WebhookDelete) {

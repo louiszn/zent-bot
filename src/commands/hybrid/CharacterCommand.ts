@@ -1,18 +1,21 @@
-import {
-	AttachmentBuilder,
+import type {
 	AutocompleteInteraction,
-	EmbedBuilder,
-	InteractionContextType,
 	MessageCreateOptions,
-	MessageFlags,
-	SlashCommandBuilder,
 	SlashCommandStringOption,
 } from "discord.js";
-import { HybridCommand, HybridContext, useHybridCommand } from "../../base/Command.js";
+import {
+	AttachmentBuilder,
+	EmbedBuilder,
+	InteractionContextType,
+	MessageFlags,
+	SlashCommandBuilder,
+} from "discord.js";
+import type { HybridContext } from "../../base/Command.js";
+import { HybridCommand, useHybridCommand } from "../../base/Command.js";
 
 import prisma from "../../libs/prisma.js";
 import { extractId, sanitize } from "../../utils/string.js";
-import { Character } from "@prisma/client";
+import type { Character } from "@prisma/client";
 import {
 	createUserCharacter,
 	getCharacterInformationEmbed,
@@ -129,7 +132,7 @@ const getCharacterOption = (option: SlashCommandStringOption) =>
 	prefixTriggers: ["character", "char"],
 })
 export default class CharacterCommand extends HybridCommand {
-	public async autocomplete(interaction: AutocompleteInteraction) {
+	public override async autocomplete(interaction: AutocompleteInteraction) {
 		const focusedOption = interaction.options.getFocused(true);
 
 		if (focusedOption.name === "character") {

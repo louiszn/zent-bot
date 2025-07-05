@@ -1,13 +1,11 @@
-import {
+import type {
 	AutocompleteInteraction,
-	ChatInputCommandInteraction,
 	ContextMenuCommandBuilder,
 	Guild,
 	GuildTextBasedChannel,
 	InteractionCallbackResponse,
 	InteractionReplyOptions,
 	InteractionResponse,
-	Message,
 	MessageContextMenuCommandInteraction,
 	MessageCreateOptions,
 	MessagePayload,
@@ -18,10 +16,12 @@ import {
 	UserContextMenuCommandInteraction,
 } from "discord.js";
 
+import { ChatInputCommandInteraction, Message } from "discord.js";
+
 import fg from "fast-glob";
 import { pathToFileURL } from "node:url";
 
-import ZentBot from "./ZentBot.js";
+import type ZentBot from "./ZentBot.js";
 
 const prefixCommandsRegistry: PrefixCommandConstructor[] = [];
 const slashCommandsRegistry: SlashCommandConstructor[] = [];
@@ -31,26 +31,26 @@ const hybridCommandsRegistry: HybridCommandConstructor[] = [];
 export abstract class BaseCommand {
 	public constructor(protected client: ZentBot<true>) {}
 
-	abstract execute(...args: any[]): Promise<void>;
+	abstract execute(...args: unknown[]): Promise<void>;
 }
 
 export abstract class PrefixCommand extends BaseCommand {
-	abstract execute(message: Message<true>, args: string[]): Promise<void>;
+	abstract override execute(message: Message<true>, args: string[]): Promise<void>;
 }
 
 export abstract class SlashCommand extends BaseCommand {
-	abstract execute(interaction: ChatInputCommandInteraction<"cached">): Promise<void>;
+	abstract override execute(interaction: ChatInputCommandInteraction<"cached">): Promise<void>;
 	autocomplete?(interaction: AutocompleteInteraction<"cached">): Promise<void>;
 }
 
 export abstract class ContextMenuCommand extends BaseCommand {
-	abstract execute(
+	abstract override execute(
 		interaction: UserContextMenuCommandInteraction | MessageContextMenuCommandInteraction,
 	): Promise<void>;
 }
 
 export abstract class HybridCommand extends BaseCommand {
-	abstract execute(context: HybridContext, args: string[]): Promise<void>;
+	abstract override execute(context: HybridContext, args: string[]): Promise<void>;
 	autocomplete?(interaction: AutocompleteInteraction<"cached">): Promise<void>;
 }
 
@@ -98,6 +98,7 @@ export class BaseHybridContext {
 		throw new Error("Invalid source provided.");
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	public async send(options: ContextSendOptions): Promise<Message<true>> {
 		throw new Error("Invalid source provided.");
 	}
@@ -119,8 +120,6 @@ export class SlashHybridContext extends BaseHybridContext {
 	}
 
 	public override async send(options: ContextSendOptions): Promise<Message<true>> {
-		options = options;
-
 		if (typeof options === "string") {
 			options = { content: options };
 		}

@@ -1,4 +1,5 @@
-import { Collection, EmbedBuilder, Message } from "discord.js";
+import type { Message } from "discord.js";
+import { Collection, EmbedBuilder } from "discord.js";
 import prisma from "./prisma.js";
 import type { Character } from "@prisma/client";
 

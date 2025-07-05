@@ -1,5 +1,5 @@
-import { GuildTextBasedChannel, Webhook } from "discord.js";
-import ZentBot from "../base/ZentBot.js";
+import type { GuildTextBasedChannel, Webhook } from "discord.js";
+import type ZentBot from "../base/ZentBot.js";
 
 export async function getWebhook(channel: GuildTextBasedChannel) {
 	const client = channel.client as ZentBot<true>;

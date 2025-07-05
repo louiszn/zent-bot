@@ -1,4 +1,5 @@
-import { Client, Collection, GatewayIntentBits, Snowflake, Webhook } from "discord.js";
+import type { Snowflake, Webhook } from "discord.js";
+import { Client, Collection, GatewayIntentBits } from "discord.js";
 
 import config from "../config.js";
 

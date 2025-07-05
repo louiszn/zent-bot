@@ -1,11 +1,11 @@
-import { ClientEvents } from "discord.js";
+import type { ClientEvents } from "discord.js";
 
 import fg from "fast-glob";
 import { pathToFileURL } from "node:url";
 
-import ZentBot from "./ZentBot.js";
+import type ZentBot from "./ZentBot.js";
 
-const listenersRegistry: ListenerConstructor<any>[] = [];
+const listenersRegistry: ListenerConstructor<keyof ClientEvents>[] = [];
 
 export abstract class Listener<E extends keyof ClientEvents> {
 	public constructor(protected client: ZentBot<true>) {}

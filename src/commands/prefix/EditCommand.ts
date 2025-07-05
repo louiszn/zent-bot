@@ -1,6 +1,5 @@
-import { Message } from "discord.js";
+import type { Message } from "discord.js";
 import { PrefixCommand, usePrefixCommand } from "../../base/Command.js";
-import ZentBot from "../../base/ZentBot.js";
 
 import { extractId } from "../../utils/string.js";
 import prisma from "../../libs/prisma.js";

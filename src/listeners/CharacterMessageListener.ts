@@ -1,14 +1,8 @@
-import {
-	GuildTextBasedChannel,
-	Message,
-	PermissionFlagsBits,
-	SendableChannels,
-	Webhook,
-} from "discord.js";
+import type { Message, Webhook } from "discord.js";
+import { PermissionFlagsBits } from "discord.js";
 import { Listener, useListener } from "../base/Listener.js";
 
 import prisma from "../libs/prisma.js";
-import ZentBot from "../base/ZentBot.js";
 
 import {
 	getReplyPreview,
