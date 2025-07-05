@@ -3,6 +3,7 @@ import type { ListenerConstructor } from "./Listener.js";
 
 import glob from "fast-glob";
 import { pathToFileURL } from "node:url";
+import logger from "../../libs/logger.js";
 
 export default class ListenerRegistry {
 	private static readonly listeners: ListenerConstructor<keyof ClientEvents>[] = [];
@@ -43,7 +44,7 @@ export default class ListenerRegistry {
 			}),
 		);
 	
-		console.log(`✅ Loaded ${count} listener files`);
+		logger.success(`Loaded ${count} listener files`);
 
 		this.freezeRegistry();
 	}

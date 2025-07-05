@@ -4,6 +4,7 @@ import { REST, Routes } from "discord.js";
 import config from "./config.js";
 
 import CommandRegistry from "./base/command/CommandRegistry.js";
+import logger from "./libs/logger.js";
 
 await CommandRegistry.loadModules();
 
@@ -16,13 +17,13 @@ const commandDatas: RESTPostAPIApplicationCommandsJSONBody[] = [
 ];
 
 try {
-	console.log(`Registering ${commandDatas.length} application commands...`);
+	logger.info(`Registering ${commandDatas.length} application commands...`);
 
 	await rest.put(Routes.applicationCommands(config.clientId), {
 		body: commandDatas,
 	});
 
-	console.log(`Successfully registered ${commandDatas.length} global commands.`);
+	logger.success(`Successfully registered ${commandDatas.length} global commands.`);
 } catch (err) {
-	console.error("Failed to register commands:", err);
+	logger.error("Failed to register commands:", err);
 }

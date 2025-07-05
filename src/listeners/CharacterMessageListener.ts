@@ -10,6 +10,7 @@ import {
 	MAX_MESSAGE_CONTENT_LENGTH,
 } from "../libs/character.js";
 import { getWebhook } from "../libs/webhook.js";
+import logger from "../libs/logger.js";
 
 @useListener("messageCreate")
 export default class CharacterMessageListener extends Listener<"messageCreate"> {
@@ -70,7 +71,7 @@ export default class CharacterMessageListener extends Listener<"messageCreate"> 
 				const repliedMessage = await message.channel.messages.fetch(message.reference.messageId);
 				replyPreview = await getReplyPreview(repliedMessage);
 			} catch (error) {
-				console.error("Failed to fetch replied message:", error);
+				logger.error("Failed to fetch replied message:", error);
 			}
 		}
 
@@ -79,7 +80,7 @@ export default class CharacterMessageListener extends Listener<"messageCreate"> 
 		try {
 			webhook = await getWebhook(message.channel);
 		} catch (error) {
-			console.error("Failed to fetch or create a new webhook:", error);
+			logger.error("Failed to fetch or create a new webhook:", error);
 		}
 
 		if (!webhook) {
@@ -110,7 +111,7 @@ export default class CharacterMessageListener extends Listener<"messageCreate"> 
 				},
 			});
 		} catch (error) {
-			console.error("Failed to send webhook message:", error);
+			logger.error("Failed to send webhook message:", error);
 		}
 	}
 }

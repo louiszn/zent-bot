@@ -8,6 +8,7 @@ import type {
 
 import glob from "fast-glob";
 import { pathToFileURL } from "node:url";
+import logger from "../../libs/logger.js";
 
 export default class CommandRegistry {
 	private static readonly prefixCommands: PrefixCommandConstructor[] = [];
@@ -86,12 +87,12 @@ export default class CommandRegistry {
 					await import(pathToFileURL(file).toString());
 					count++;
 				} catch (error) {
-					console.error(`An error occurred while loading command file '${file}':`, error);
+					logger.error(`An error occurred while loading command file '${file}':`, error);
 				}
 			}),
 		);
 
-		console.log(`✅ Loaded ${count} command files`);
+		logger.success(`Loaded ${count} command files`);
 
 		this.freezeRegistry();
 	}

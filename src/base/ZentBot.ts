@@ -7,6 +7,7 @@ import CommandManager from "./command/CommandManager.js";
 
 import type { Component } from "./Component.js";
 import ListenerRegistry from "./listener/ListenerRegistry.js";
+import logger from "../libs/logger.js";
 
 export default class ZentBot<Ready extends boolean = boolean> extends Client<Ready> {
 	public commandManager: CommandManager<Ready>;
@@ -57,14 +58,14 @@ export default class ZentBot<Ready extends boolean = boolean> extends Client<Rea
 
 				count++;
 			} catch (error) {
-				console.error(`An error occurred while registering listener '${constructor.name}':`, error);
+				logger.error(`An error occurred while registering listener '${constructor.name}':`, error);
 			}
 		}
 
-		console.log(`✅ Registered total ${count}/${constructors.length} listeners`);
+		logger.success(`Registered total ${count}/${constructors.length} listeners`);
 	}
 
 	private async onReady(this: ZentBot<true>) {
-		console.log(`Successfully logged in as ${this.user!.tag}`);
+		logger.success(`Successfully logged in as ${this.user!.tag}`);
 	}
 }

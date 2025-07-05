@@ -14,6 +14,7 @@ import type {
 
 import type ZentBot from "../ZentBot.js";
 import CommandRegistry from "./CommandRegistry.js";
+import logger from "../../libs/logger.js";
 
 export default class CommandManager<Ready extends boolean = boolean> {
 	public slashCommands: Collection<string, SlashCommand | HybridCommand> = new Collection();
@@ -70,13 +71,13 @@ export default class CommandManager<Ready extends boolean = boolean> {
 			hybridCommandCount
 		].reduce((total, count) => total + count, 0);
 
-		console.log(
+		logger.success(
 			[
-				`✅ Registered total ${commandCount}/${registryCount} commands:`,
-				`+ 📤 Slash:        ${slashCommandCount}/${slashCommandsRegistry.length}`,
-				`+ 📝 Prefix:       ${prefixCommandCount}/${prefixCommandsRegistry.length}`,
-				`+ 📋 Context Menu: ${contextMenuCommandCount}/${contextMenuCommandsRegistry.length}`,
-				`+ ⚡ Hybrid:       ${hybridCommandCount}/${hybridCommandsRegistry.length}`,
+				`Registered total ${commandCount}/${registryCount} commands:`,
+				`    + 📤 Slash:        ${slashCommandCount}/${slashCommandsRegistry.length}`,
+				`    + 📝 Prefix:       ${prefixCommandCount}/${prefixCommandsRegistry.length}`,
+				`    + 📋 Context Menu: ${contextMenuCommandCount}/${contextMenuCommandsRegistry.length}`,
+				`    + ⚡ Hybrid:       ${hybridCommandCount}/${hybridCommandsRegistry.length}`,
 			].join("\n"),
 		);
 	}
@@ -104,7 +105,7 @@ export default class CommandManager<Ready extends boolean = boolean> {
 	}
 
 	private logCommandRegisterError(error: unknown, name: string, type: string) {
-		console.error(`An error occurred while registering ${type} command '${name}':`, error);
+		logger.error(`An error occurred while registering ${type} command '${name}':`, error);
 	}
 
 	private registerSlashCommand(name: string, instance: SlashCommand | HybridCommand): boolean {
@@ -141,7 +142,7 @@ export default class CommandManager<Ready extends boolean = boolean> {
 		}
 
 		if (count != triggers.length) {
-			console.warn(
+			logger.warn(
 				`Registered ${count}/${triggers.length} triggers for ${instance.constructor.name}`,
 			);
 		}
@@ -156,7 +157,7 @@ export default class CommandManager<Ready extends boolean = boolean> {
 		type: string,
 	): boolean {
 		if (collection.has(key)) {
-			console.warn(`Duplicate ${type} detected from ${instance.constructor.name}: ${key}`);
+			logger.warn(`Duplicate ${type} detected from ${instance.constructor.name}: ${key}`);
 			return false;
 		}
 
@@ -176,7 +177,7 @@ export default class CommandManager<Ready extends boolean = boolean> {
 		const isAdded = isSlashAdded || isPrefixAdded;
 
 		if (isAdded && (!isSlashAdded || !isPrefixAdded)) {
-			console.warn(
+			logger.warn(
 				`Partial registration for hybrid command ${instance.constructor.name}: slash=${isSlashAdded}, prefix=${isPrefixAdded}`,
 			);
 		}

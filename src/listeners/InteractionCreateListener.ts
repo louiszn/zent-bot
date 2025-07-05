@@ -2,6 +2,7 @@ import type { CommandInteraction, Interaction } from "discord.js";
 import { DiscordAPIError, MessageFlags, RESTJSONErrorCodes } from "discord.js";
 import { Listener, useListener } from "../base/listener/Listener.js";
 import { HybridCommand, SlashHybridContext } from "../base/command/Command.js";
+import logger from "../libs/logger.js";
 
 @useListener("interactionCreate")
 export default class InteractionCreateListener extends Listener<"interactionCreate"> {
@@ -17,7 +18,7 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 			const command = client.commandManager.slashCommands.get(commandName);
 
 			if (!command) {
-				console.warn(`Unknown slash command: ${commandName}`);
+				logger.warn(`Unknown slash command: ${commandName}`);
 				return;
 			}
 
@@ -72,7 +73,7 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 			try {
 				await command.autocomplete(interaction);
 			} catch (error) {
-				console.error("Failed to respond autocomplete:", error);
+				logger.error("Failed to respond autocomplete:", error);
 			}
 		}
 	}
@@ -80,7 +81,7 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 	private async handleCommandInteractionError(interaction: CommandInteraction, error: unknown) {
 		const { commandName } = interaction;
 
-		console.error(`An error occurred while executing '${commandName}':`, error);
+		logger.error(`An error occurred while executing '${commandName}':`, error);
 
 		if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownInteraction) {
 			return; // Too late to respond
@@ -96,7 +97,7 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 					await interaction.reply({ content, flags: MessageFlags.Ephemeral });
 				}
 			} catch (replyError) {
-				console.error("Failed to notify user of command failure:", replyError);
+				logger.error("Failed to notify user of command failure:", replyError);
 			}
 		}
 	}

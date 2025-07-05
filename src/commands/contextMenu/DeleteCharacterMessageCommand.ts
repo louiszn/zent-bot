@@ -7,6 +7,7 @@ import {
 } from "discord.js";
 import { ContextMenuCommand, useContextMenuCommand } from "../../base/command/Command.js";
 import prisma from "../../libs/prisma.js";
+import logger from "../../libs/logger.js";
 
 @useContextMenuCommand(
 	new ContextMenuCommandBuilder()
@@ -65,7 +66,7 @@ export default class DeleteCharMessageCommand extends ContextMenuCommand {
 				where: { id: characterMessage.id },
 			});
 		} catch (error) {
-			console.error(`Failed to delete message ${characterMessage.id} from database:`, error);
+			logger.error(`Failed to delete message ${characterMessage.id} from database:`, error);
 		}
 	}
 }

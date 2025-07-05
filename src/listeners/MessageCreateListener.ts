@@ -2,6 +2,7 @@ import type { Message } from "discord.js";
 import { Listener, useListener } from "../base/listener/Listener.js";
 
 import { HybridCommand, PrefixHybridContext } from "../base/command/Command.js";
+import logger from "../libs/logger.js";
 
 const PREFIX = "_";
 
@@ -35,7 +36,7 @@ export default class MessageCreateListener extends Listener<"messageCreate"> {
 				await command.execute(message, args);
 			}
 		} catch (error) {
-			console.error(`An error occurred while executing command '${commandName}':`, error);
+			logger.error(`An error occurred while executing command '${commandName}':`, error);
 		}
 	}
 }
