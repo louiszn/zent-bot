@@ -1,4 +1,19 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, ComponentType, InteractionCollector, InteractionUpdateOptions, Message, MessageCreateOptions, MessageEditOptions, MessageFlags, ModalBuilder, TextInputBuilder, TextInputStyle } from "discord.js";
+import {
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonInteraction,
+	ButtonStyle,
+	ComponentType,
+	InteractionCollector,
+	InteractionUpdateOptions,
+	Message,
+	MessageCreateOptions,
+	MessageEditOptions,
+	MessageFlags,
+	ModalBuilder,
+	TextInputBuilder,
+	TextInputStyle,
+} from "discord.js";
 import { HybridContext } from "../base/Command.js";
 
 interface PaginationOptions {
@@ -40,14 +55,15 @@ export class Paginator {
 		});
 	}
 
-	private async onCollect(collector: InteractionCollector<ButtonInteraction<"cached">>, interaction: ButtonInteraction) {
-		if (![
-			"first",
-			"last",
-			"previous",
-			"next",
-			"current"
-		].some((x) => `paginator:${x}` === interaction.customId)) {
+	private async onCollect(
+		collector: InteractionCollector<ButtonInteraction<"cached">>,
+		interaction: ButtonInteraction,
+	) {
+		if (
+			!["first", "last", "previous", "next", "current"].some(
+				(x) => `paginator:${x}` === interaction.customId,
+			)
+		) {
 			return;
 		}
 
@@ -67,9 +83,7 @@ export class Paginator {
 				this.currentPage++;
 				break;
 			case "paginator:current": {
-				const modal = new ModalBuilder()
-					.setTitle("Set page")
-					.setCustomId("paginator:set-page");
+				const modal = new ModalBuilder().setTitle("Set page").setCustomId("paginator:set-page");
 
 				const pageInput = new TextInputBuilder()
 					.setCustomId("page-input")
@@ -132,7 +146,10 @@ export class Paginator {
 		}
 	}
 
-	private async onEnd(collector: InteractionCollector<ButtonInteraction<"cached">>, message: Message<true>) {
+	private async onEnd(
+		collector: InteractionCollector<ButtonInteraction<"cached">>,
+		message: Message<true>,
+	) {
 		await message.edit(this.renderPage(true) as MessageEditOptions);
 	}
 
@@ -142,7 +159,7 @@ export class Paginator {
 		const components = [...(page.components || [])];
 
 		if (this.options.pages.length > 1) {
-			components.push(this.getActionRow(isEnded))
+			components.push(this.getActionRow(isEnded));
 		}
 
 		return {

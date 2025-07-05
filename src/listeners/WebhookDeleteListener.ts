@@ -10,7 +10,7 @@ export default class WebhookDeleteListener extends Listener<"guildAuditLogEntryC
 			return;
 		}
 
-		const channelId = client.botWebhooks.findKey((bw) => bw.id === entry.targetId)
+		const channelId = client.botWebhooks.findKey((bw) => bw.id === entry.targetId);
 
 		if (!channelId) {
 			return;

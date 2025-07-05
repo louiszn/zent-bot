@@ -1,5 +1,18 @@
 import { Collection } from "discord.js";
-import { SlashCommand, HybridCommand, PrefixCommand, ContextMenuCommand, loadCommandRegistry, BaseCommand, SlashCommandConstructor, PrefixCommandConstructor, ContextMenuCommandConstructor, HybridCommandConstructor, CommandConstructor, Command } from "../base/Command.js";
+import {
+	SlashCommand,
+	HybridCommand,
+	PrefixCommand,
+	ContextMenuCommand,
+	loadCommandRegistry,
+	BaseCommand,
+	SlashCommandConstructor,
+	PrefixCommandConstructor,
+	ContextMenuCommandConstructor,
+	HybridCommandConstructor,
+	CommandConstructor,
+	Command,
+} from "../base/Command.js";
 import ZentBot from "../base/ZentBot.js";
 
 export default class CommandManager<Ready extends boolean = boolean> {
@@ -14,7 +27,7 @@ export default class CommandManager<Ready extends boolean = boolean> {
 			slashCommandsRegistry,
 			prefixCommandsRegistry,
 			contextMenuCommandsRegistry,
-			hybridCommandsRegistry
+			hybridCommandsRegistry,
 		} = await loadCommandRegistry();
 
 		let commandCount = 0;
@@ -22,29 +35,30 @@ export default class CommandManager<Ready extends boolean = boolean> {
 		commandCount += this.registerCommandType<SlashCommand, SlashCommandConstructor>(
 			slashCommandsRegistry,
 			"slash",
-			(instance, constructor) => this.registerSlashCommand(constructor.data.name, instance)
+			(instance, constructor) => this.registerSlashCommand(constructor.data.name, instance),
 		);
 
 		commandCount += this.registerCommandType<PrefixCommand, PrefixCommandConstructor>(
 			prefixCommandsRegistry,
 			"prefix",
-			(instance, constructor) => this.registerPrefixCommand(constructor.triggers, instance)
+			(instance, constructor) => this.registerPrefixCommand(constructor.triggers, instance),
 		);
 
 		commandCount += this.registerCommandType<ContextMenuCommand, ContextMenuCommandConstructor>(
 			contextMenuCommandsRegistry,
 			"context menu",
-			(instance, constructor) => this.registerContextMenuCommand(constructor.data.name, instance)
+			(instance, constructor) => this.registerContextMenuCommand(constructor.data.name, instance),
 		);
 
 		commandCount += this.registerCommandType<HybridCommand, HybridCommandConstructor>(
 			hybridCommandsRegistry,
 			"hybrid",
-			(instance, constructor) => this.registerHybridCommand(
-				constructor.applicationCommandData.name,
-				constructor.prefixTriggers,
-				instance,
-			)
+			(instance, constructor) =>
+				this.registerHybridCommand(
+					constructor.applicationCommandData.name,
+					constructor.prefixTriggers,
+					instance,
+				),
 		);
 
 		console.log(`Loaded ${commandCount} commands`);
@@ -53,7 +67,7 @@ export default class CommandManager<Ready extends boolean = boolean> {
 	private registerCommandType<T extends Command, C extends CommandConstructor>(
 		registry: C[],
 		type: string,
-		registerFn: (instance: T, constructor: C) => boolean
+		registerFn: (instance: T, constructor: C) => boolean,
 	) {
 		let count = 0;
 
@@ -73,7 +87,7 @@ export default class CommandManager<Ready extends boolean = boolean> {
 	}
 
 	private logCommandRegisterError(error: unknown, name: string, type: string) {
-		console.error(`An error occurred while registering ${type} command '${name}':`, error)
+		console.error(`An error occurred while registering ${type} command '${name}':`, error);
 	}
 
 	private registerSlashCommand(name: string, instance: SlashCommand | HybridCommand): boolean {
@@ -85,10 +99,18 @@ export default class CommandManager<Ready extends boolean = boolean> {
 	}
 
 	private registerContextMenuCommand(name: string, instance: ContextMenuCommand): boolean {
-		return this.registerInCollection(this.contextMenuCommands, name, instance, "context menu command");
+		return this.registerInCollection(
+			this.contextMenuCommands,
+			name,
+			instance,
+			"context menu command",
+		);
 	}
 
-	private registerPrefixCommand(triggers: string[], instance: PrefixCommand | HybridCommand): boolean {
+	private registerPrefixCommand(
+		triggers: string[],
+		instance: PrefixCommand | HybridCommand,
+	): boolean {
 		let count = 0;
 
 		for (const trigger of triggers) {
@@ -102,7 +124,9 @@ export default class CommandManager<Ready extends boolean = boolean> {
 		}
 
 		if (count != triggers.length) {
-			console.warn(`Registered ${count}/${triggers.length} triggers for ${instance.constructor.name}`);
+			console.warn(
+				`Registered ${count}/${triggers.length} triggers for ${instance.constructor.name}`,
+			);
 		}
 
 		return true;
@@ -112,7 +136,7 @@ export default class CommandManager<Ready extends boolean = boolean> {
 		collection: Collection<string, T>,
 		key: string,
 		instance: T,
-		type: string
+		type: string,
 	): boolean {
 		if (collection.has(key)) {
 			console.warn(`Duplicate ${type} detected from ${instance.constructor.name}: ${key}`);
@@ -124,14 +148,20 @@ export default class CommandManager<Ready extends boolean = boolean> {
 		return true;
 	}
 
-	private registerHybridCommand(name: string, triggers: string[], instance: HybridCommand): boolean {
+	private registerHybridCommand(
+		name: string,
+		triggers: string[],
+		instance: HybridCommand,
+	): boolean {
 		const isSlashAdded = this.registerSlashCommand(name, instance);
 		const isPrefixAdded = this.registerPrefixCommand(triggers, instance);
 
 		const isAdded = isSlashAdded || isPrefixAdded;
 
 		if (isAdded && (!isSlashAdded || !isPrefixAdded)) {
-			console.warn(`Partial registration for hybrid command ${instance.constructor.name}: slash=${isSlashAdded}, prefix=${isPrefixAdded}`);
+			console.warn(
+				`Partial registration for hybrid command ${instance.constructor.name}: slash=${isSlashAdded}, prefix=${isPrefixAdded}`,
+			);
 		}
 
 		return isAdded;

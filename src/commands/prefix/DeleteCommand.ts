@@ -37,7 +37,7 @@ export default class DeleteCommand extends PrefixCommand {
 				return;
 			}
 		}
-		
+
 		const characterMessage = await prisma.message.findFirst({
 			where: { id: targetMessage.id },
 			include: { character: true },

@@ -62,7 +62,9 @@ export default class DeleteCommand extends PrefixCommand {
 		const webhook = await getWebhook(message.channel);
 
 		if (!webhook || targetMessage.webhookId !== webhook.id) {
-			await message.channel.send("Couldn't edit this message since the original webhook is deleted.");
+			await message.channel.send(
+				"Couldn't edit this message since the original webhook is deleted.",
+			);
 			return;
 		}
 
@@ -71,9 +73,7 @@ export default class DeleteCommand extends PrefixCommand {
 		const replyPreview = characterMessage.replyPreview;
 
 		await webhook.editMessage(targetMessage, {
-			content: replyPreview
-				? `${replyPreview}\n${newContent}`
-				: newContent
+			content: replyPreview ? `${replyPreview}\n${newContent}` : newContent,
 		});
 
 		await prisma.message.update({

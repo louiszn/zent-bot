@@ -15,7 +15,7 @@ import {
 	SlashCommandBuilder,
 	SlashCommandSubcommandsOnlyBuilder,
 	User,
-	UserContextMenuCommandInteraction
+	UserContextMenuCommandInteraction,
 } from "discord.js";
 
 import fg from "fast-glob";
@@ -44,7 +44,9 @@ export abstract class SlashCommand extends BaseCommand {
 }
 
 export abstract class ContextMenuCommand extends BaseCommand {
-	abstract execute(interaction: UserContextMenuCommandInteraction | MessageContextMenuCommandInteraction): Promise<void>;
+	abstract execute(
+		interaction: UserContextMenuCommandInteraction | MessageContextMenuCommandInteraction,
+	): Promise<void>;
 }
 
 export abstract class HybridCommand extends BaseCommand {
@@ -60,17 +62,12 @@ export interface ContextResponse {
 }
 
 export interface ContextCallbackResponse {
-	interaction: InteractionCallbackResponse
+	interaction: InteractionCallbackResponse;
 }
 
-export type SlashContextSendOptions =
-	| string
-	| InteractionReplyOptions
+export type SlashContextSendOptions = string | InteractionReplyOptions;
 
-export type PrefixContextSendOptions =
-	| string
-	| MessagePayload
-	| MessageCreateOptions;
+export type PrefixContextSendOptions = string | MessagePayload | MessageCreateOptions;
 
 export type ContextSendOptions = SlashContextSendOptions | PrefixContextSendOptions;
 
@@ -107,7 +104,7 @@ export class BaseHybridContext {
 }
 
 export class SlashHybridContext extends BaseHybridContext {
-	public declare readonly source: ChatInputCommandInteraction<"cached">;
+	declare public readonly source: ChatInputCommandInteraction<"cached">;
 
 	public override get user(): User {
 		return this.source.user;
@@ -138,7 +135,7 @@ export class SlashHybridContext extends BaseHybridContext {
 }
 
 export class PrefixHybridContext extends BaseHybridContext {
-	public declare readonly source: Message<true>;
+	declare public readonly source: Message<true>;
 
 	public override get user(): User {
 		return this.source.author;
@@ -161,27 +158,31 @@ export class PrefixHybridContext extends BaseHybridContext {
 export type HybridContext = SlashHybridContext | PrefixHybridContext;
 
 export interface PrefixCommandConstructor {
-	new(client: ZentBot<true>): PrefixCommand;
-	triggers: string[]
+	new (client: ZentBot<true>): PrefixCommand;
+	triggers: string[];
 }
 
 export interface SlashCommandConstructor {
-	new(client: ZentBot<true>): SlashCommand;
+	new (client: ZentBot<true>): SlashCommand;
 	data: RESTPostAPIApplicationCommandsJSONBody;
 }
 
 export interface ContextMenuCommandConstructor {
-	new(client: ZentBot<true>): ContextMenuCommand;
+	new (client: ZentBot<true>): ContextMenuCommand;
 	data: RESTPostAPIApplicationCommandsJSONBody;
 }
 
 export interface HybridCommandConstructor {
-	new(client: ZentBot<true>): HybridCommand;
+	new (client: ZentBot<true>): HybridCommand;
 	applicationCommandData: RESTPostAPIApplicationCommandsJSONBody;
 	prefixTriggers: string[];
 }
 
-export type CommandConstructor = SlashCommandConstructor | PrefixCommandConstructor | ContextMenuCommandConstructor | HybridCommandConstructor;
+export type CommandConstructor =
+	| SlashCommandConstructor
+	| PrefixCommandConstructor
+	| ContextMenuCommandConstructor
+	| HybridCommandConstructor;
 
 export function usePrefixCommand(triggers: string[]) {
 	return function <T extends typeof PrefixCommand>(constructor: T) {
@@ -194,14 +195,14 @@ export function useSlashCommand(data: SlashCommandBuilder | SlashCommandSubcomma
 	return function <T extends typeof SlashCommand>(constructor: T) {
 		(constructor as T & SlashCommandConstructor).data = data.toJSON();
 		slashCommandsRegistry.push(constructor as T & SlashCommandConstructor);
-	}
+	};
 }
 
 export function useContextMenuCommand(data: ContextMenuCommandBuilder) {
 	return function <T extends typeof ContextMenuCommand>(constructor: T) {
 		(constructor as T & ContextMenuCommandConstructor).data = data.toJSON();
 		contextMenuCommandsRegistry.push(constructor as T & ContextMenuCommandConstructor);
-	}
+	};
 }
 
 export function useHybridCommand(options: {
@@ -215,7 +216,7 @@ export function useHybridCommand(options: {
 		correctConstructor.prefixTriggers = options.prefixTriggers;
 
 		hybridCommandsRegistry.push(correctConstructor);
-	}
+	};
 }
 
 export async function loadCommandRegistry() {
@@ -234,5 +235,5 @@ export async function loadCommandRegistry() {
 		slashCommandsRegistry,
 		contextMenuCommandsRegistry,
 		hybridCommandsRegistry,
-	}
+	};
 }

@@ -7,7 +7,6 @@ export function isValidHttpUrl(url: string): boolean {
 	}
 }
 
-
 export async function isImageUrl(url: string): Promise<boolean> {
 	if (!isValidHttpUrl(url)) {
 		return false;

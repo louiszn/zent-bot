@@ -9,7 +9,10 @@ type CharacterCollection = Collection<string, Character>;
 
 const userCharacters: Collection<string, CharacterCollection> = new Collection();
 
-export async function getUserCharacters(userId: string, force = false): Promise<CharacterCollection> {
+export async function getUserCharacters(
+	userId: string,
+	force = false,
+): Promise<CharacterCollection> {
 	let characters: CharacterCollection | undefined;
 
 	if (!force) {
@@ -34,24 +37,35 @@ export async function getUserCharacters(userId: string, force = false): Promise<
 	return characters;
 }
 
-export async function getUserCharacterById(userId: string, characterId: string, force = false): Promise<Character | null> {
+export async function getUserCharacterById(
+	userId: string,
+	characterId: string,
+	force = false,
+): Promise<Character | null> {
 	const characters = await getUserCharacters(userId, force);
 	return characters.get(characterId) ?? null;
 }
 
-export async function getUserCharacterByTag(userId: string, characterTag: string, force = false): Promise<Character | null> {
+export async function getUserCharacterByTag(
+	userId: string,
+	characterTag: string,
+	force = false,
+): Promise<Character | null> {
 	const characters = await getUserCharacters(userId, force);
 	return characters.find((char) => char.tag === characterTag) || null;
 }
 
-export async function createUserCharacter(userId: string, characterTag: string): Promise<Character> {
+export async function createUserCharacter(
+	userId: string,
+	characterTag: string,
+): Promise<Character> {
 	const characters = await getUserCharacters(userId);
 
 	const character = await prisma.character.create({
 		data: {
 			tag: characterTag,
-			userId
-		}
+			userId,
+		},
 	});
 
 	characters.set(character.id, character);
@@ -59,7 +73,11 @@ export async function createUserCharacter(userId: string, characterTag: string):
 	return character;
 }
 
-export async function updateUserCharacterById(userId: string, characterId: string, data: Partial<Character>): Promise<Character> {
+export async function updateUserCharacterById(
+	userId: string,
+	characterId: string,
+	data: Partial<Character>,
+): Promise<Character> {
 	const characters = await getUserCharacters(userId);
 
 	const character = await prisma.character.update({
@@ -67,7 +85,7 @@ export async function updateUserCharacterById(userId: string, characterId: strin
 			id: characterId,
 			userId,
 		},
-		data
+		data,
 	});
 
 	characters.set(characterId, character);
@@ -84,15 +102,17 @@ export function getCharacterInformationEmbed(character: Character) {
 		.setTitle(character.name || character.tag)
 		.setColor("Yellow")
 		.setThumbnail(character.avatarURL)
-		.setDescription(`> **Tag:** \`${character.tag}\`
+		.setDescription(
+			`> **Tag:** \`${character.tag}\`
 > **Prefix:** \`${character.prefix}\`
 > **Owner:** <@${character.userId}>
-> **Created at:** <t:${Math.floor(character.createdAt.getTime() / 1000)}:R>`)
+> **Created at:** <t:${Math.floor(character.createdAt.getTime() / 1000)}:R>`,
+		)
 		.setTimestamp();
 }
 
 export async function getReplyPreview(message: Message) {
-	let author: string = message.author.toString()
+	let author: string = message.author.toString();
 	let content = message.content;
 
 	if (message.webhookId) {
@@ -102,7 +122,7 @@ export async function getReplyPreview(message: Message) {
 			where: { id: message.id },
 			include: {
 				character: true,
-			}
+			},
 		});
 
 		if (characterMessage) {

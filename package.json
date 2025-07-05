@@ -8,9 +8,11 @@
 	"scripts": {
 		"start": "node dist/index.js",
 		"deloy": "node dist/deloyCommands.js",
-		"build": "tsc"
+		"build": "tsc",
+		"format": "prettier . --write"
 	},
 	"devDependencies": {
+		"prettier": "^3.6.2",
 		"prisma": "^6.11.0",
 		"typescript": "^5.8.3"
 	},

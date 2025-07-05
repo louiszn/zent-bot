@@ -1,10 +1,27 @@
-import { AttachmentBuilder, AutocompleteInteraction, EmbedBuilder, InteractionContextType, MessageCreateOptions, MessageFlags, SlashCommandBuilder, SlashCommandStringOption } from "discord.js";
+import {
+	AttachmentBuilder,
+	AutocompleteInteraction,
+	EmbedBuilder,
+	InteractionContextType,
+	MessageCreateOptions,
+	MessageFlags,
+	SlashCommandBuilder,
+	SlashCommandStringOption,
+} from "discord.js";
 import { HybridCommand, HybridContext, useHybridCommand } from "../../base/Command.js";
 
 import prisma from "../../libs/prisma.js";
 import { extractId, sanitize } from "../../utils/string.js";
 import { Character } from "@prisma/client";
-import { createUserCharacter, getCharacterInformationEmbed, getDisplayNameWithTag, getUserCharacterById, getUserCharacterByTag, getUserCharacters, updateUserCharacterById } from "../../libs/character.js";
+import {
+	createUserCharacter,
+	getCharacterInformationEmbed,
+	getDisplayNameWithTag,
+	getUserCharacterById,
+	getUserCharacterByTag,
+	getUserCharacters,
+	updateUserCharacterById,
+} from "../../libs/character.js";
 import { isImageUrl } from "../../utils/url.js";
 import { Paginator } from "../../libs/Paginator.js";
 
@@ -13,7 +30,7 @@ const getCharacterOption = (option: SlashCommandStringOption) =>
 		.setName("character")
 		.setDescription("Specific a character.")
 		.setAutocomplete(true)
-		.setRequired(true)
+		.setRequired(true);
 
 @useHybridCommand({
 	applicationCommandData: new SlashCommandBuilder()
@@ -30,8 +47,8 @@ const getCharacterOption = (option: SlashCommandStringOption) =>
 						.setDescription("Specific character tag.")
 						.setMinLength(1)
 						.setMaxLength(20)
-						.setRequired(true)
-				)
+						.setRequired(true),
+				),
 		)
 		.addSubcommandGroup((group) =>
 			group
@@ -48,8 +65,8 @@ const getCharacterOption = (option: SlashCommandStringOption) =>
 								.setDescription("Specific a new name for the character.")
 								.setMinLength(1)
 								.setMaxLength(50)
-								.setRequired(true)
-						)
+								.setRequired(true),
+						),
 				)
 				.addSubcommand((subcommand) =>
 					subcommand
@@ -62,8 +79,8 @@ const getCharacterOption = (option: SlashCommandStringOption) =>
 								.setDescription("Specific a new tag for the character.")
 								.setMinLength(1)
 								.setMaxLength(20)
-								.setRequired(true)
-						)
+								.setRequired(true),
+						),
 				)
 				.addSubcommand((subcommand) =>
 					subcommand
@@ -76,8 +93,8 @@ const getCharacterOption = (option: SlashCommandStringOption) =>
 								.setDescription("Specific a new prefix for the character.")
 								.setRequired(true)
 								.setMinLength(1)
-								.setMaxLength(10)
-						)
+								.setMaxLength(10),
+						),
 				)
 				.addSubcommand((subcommand) =>
 					subcommand
@@ -88,20 +105,17 @@ const getCharacterOption = (option: SlashCommandStringOption) =>
 							option
 								.setName("avatar")
 								.setDescription("Upload a file attachment.")
-								.setRequired(true)
-						)
-				)
-
+								.setRequired(true),
+						),
+				),
 		)
 		.addSubcommand((subcommand) =>
 			subcommand
 				.setName("list")
 				.setDescription("Shows a list of your characters.")
 				.addUserOption((option) =>
-					option
-						.setName("user")
-						.setDescription("Choose a user to show their characters.")
-				)
+					option.setName("user").setDescription("Choose a user to show their characters."),
+				),
 		)
 		.addSubcommand((subcommand) =>
 			subcommand
@@ -109,10 +123,8 @@ const getCharacterOption = (option: SlashCommandStringOption) =>
 				.setDescription("Show character's information.")
 				.addStringOption(getCharacterOption)
 				.addUserOption((option) =>
-					option
-						.setName("user")
-						.setDescription("Choose a user to their character's information.")
-				)
+					option.setName("user").setDescription("Choose a user to their character's information."),
+				),
 		),
 	prefixTriggers: ["character", "char"],
 })
@@ -121,12 +133,12 @@ export default class CharacterCommand extends HybridCommand {
 		const focusedOption = interaction.options.getFocused(true);
 
 		if (focusedOption.name === "character") {
-			const userId = interaction.options.get("user")?.value as string || interaction.user.id;
+			const userId = (interaction.options.get("user")?.value as string) || interaction.user.id;
 
 			const characters = await prisma.character.findMany({
 				where: {
 					userId: userId,
-				}
+				},
 			});
 
 			if (!characters.length) {
@@ -135,9 +147,8 @@ export default class CharacterCommand extends HybridCommand {
 
 			const input = focusedOption.value.toLowerCase().trim();
 
-			const filterred = characters.filter((char) =>
-				char.name?.toLowerCase().includes(input) ||
-				char.id.toLowerCase().includes(input)
+			const filterred = characters.filter(
+				(char) => char.name?.toLowerCase().includes(input) || char.id.toLowerCase().includes(input),
 			);
 
 			if (!filterred.length) {
@@ -148,7 +159,7 @@ export default class CharacterCommand extends HybridCommand {
 				filterred.map((choice) => ({
 					name: choice.name ? `${choice.name} (${choice.tag})` : choice.tag,
 					value: choice.id,
-				}))
+				})),
 			);
 		}
 	}
@@ -156,7 +167,7 @@ export default class CharacterCommand extends HybridCommand {
 	public async execute(context: HybridContext, args: string[]) {
 		const choice = context.isInteraction()
 			? context.source.options.getSubcommandGroup(false) || context.source.options.getSubcommand()
-			: args[1]
+			: args[1];
 
 		switch (choice) {
 			case "create":
@@ -194,7 +205,7 @@ export default class CharacterCommand extends HybridCommand {
 			where: {
 				tag,
 				userId: context.user.id,
-			}
+			},
 		});
 
 		if (existed !== null) {
@@ -208,7 +219,9 @@ export default class CharacterCommand extends HybridCommand {
 
 		await createUserCharacter(context.user.id, tag);
 
-		await context.send(`Created new character with tag \`${tag}\`. You can also change character's tag later.`);
+		await context.send(
+			`Created new character with tag \`${tag}\`. You can also change character's tag later.`,
+		);
 	}
 
 	private async onEdit(context: HybridContext, args: string[]) {
@@ -231,9 +244,7 @@ export default class CharacterCommand extends HybridCommand {
 			return;
 		}
 
-		const choice = context.isInteraction()
-			? context.source.options.getSubcommand()
-			: args[3]
+		const choice = context.isInteraction() ? context.source.options.getSubcommand() : args[3];
 
 		switch (choice) {
 			case "name":
@@ -294,8 +305,8 @@ export default class CharacterCommand extends HybridCommand {
 								name: char.name || char.tag,
 								value: `> **Prefix:** ${char.prefix ? `\`${char.prefix}\`` : "None"}
 > **Tag:** ${char.tag}`,
-							}
-						})
+							};
+						}),
 					);
 
 				pages.push({ embeds: [embed] });
@@ -308,7 +319,9 @@ export default class CharacterCommand extends HybridCommand {
 
 			await paginator.start();
 		} else {
-			await context.send(`${user.id === context.user.id ? "You don't" : "This user doesn't"} have any characters.`);
+			await context.send(
+				`${user.id === context.user.id ? "You don't" : "This user doesn't"} have any characters.`,
+			);
 		}
 	}
 
@@ -383,7 +396,9 @@ export default class CharacterCommand extends HybridCommand {
 
 		await updateUserCharacterById(context.user.id, character.id, { name });
 
-		await context.send(`Successfully changed character name from \`${character.name || character.tag}\` to \`${name}\`.`);
+		await context.send(
+			`Successfully changed character name from \`${character.name || character.tag}\` to \`${name}\`.`,
+		);
 	}
 
 	private async onTagEdit(context: HybridContext, args: string[], character: Character) {
@@ -409,7 +424,9 @@ export default class CharacterCommand extends HybridCommand {
 
 		await updateUserCharacterById(context.user.id, character.id, { tag: newTag });
 
-		await context.send(`Successfully changed character tag from \`${character.tag}\` to \`${newTag}\`.`);
+		await context.send(
+			`Successfully changed character tag from \`${character.tag}\` to \`${newTag}\`.`,
+		);
 	}
 
 	private async onAvatarEdit(context: HybridContext, args: string[], character: Character) {
@@ -497,6 +514,8 @@ export default class CharacterCommand extends HybridCommand {
 
 		await updateUserCharacterById(context.user.id, character.id, { prefix });
 
-		await context.send(`Successfully changed character prefix from \`${character.prefix}\` to \`${prefix}\`.`);
+		await context.send(
+			`Successfully changed character prefix from \`${character.prefix}\` to \`${prefix}\`.`,
+		);
 	}
 }

@@ -1,4 +1,10 @@
-import { CommandInteraction, DiscordAPIError, Interaction, MessageFlags, RESTJSONErrorCodes } from "discord.js";
+import {
+	CommandInteraction,
+	DiscordAPIError,
+	Interaction,
+	MessageFlags,
+	RESTJSONErrorCodes,
+} from "discord.js";
 import { Listener, useListener } from "../base/Listener.js";
 import ZentBot from "../base/ZentBot.js";
 import { HybridCommand, SlashHybridContext } from "../base/Command.js";
@@ -14,7 +20,7 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 			}
 
 			const { commandName } = interaction;
-			const command = client.commandManager.slashCommands.get(commandName)
+			const command = client.commandManager.slashCommands.get(commandName);
 
 			if (!command) {
 				console.warn(`Unknown slash command: ${commandName}`);
@@ -36,7 +42,7 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 			}
 
 			const { commandName } = interaction;
-			const command = client.commandManager.contextMenuCommands.get(commandName)
+			const command = client.commandManager.contextMenuCommands.get(commandName);
 
 			if (!command) {
 				console.warn(`Unknown context menu command: ${commandName}`);
@@ -63,7 +69,9 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 			}
 
 			if (!command.autocomplete) {
-				console.warn(`Command '${commandName}' used autocomplete option but no methods were declared.`);
+				console.warn(
+					`Command '${commandName}' used autocomplete option but no methods were declared.`,
+				);
 				return;
 			}
 

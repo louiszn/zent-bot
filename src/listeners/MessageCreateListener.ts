@@ -19,10 +19,7 @@ export default class MessageCreateListener extends Listener<"messageCreate"> {
 			return;
 		}
 
-		const args = message.content
-			.slice(PREFIX.length)
-			.trim()
-			.split(/\s+/g);
+		const args = message.content.slice(PREFIX.length).trim().split(/\s+/g);
 
 		const commandName = args[0].toLowerCase();
 

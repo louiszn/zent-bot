@@ -1,4 +1,10 @@
-import { ApplicationCommandType, ContextMenuCommandBuilder, InteractionContextType, MessageContextMenuCommandInteraction, MessageFlags } from "discord.js";
+import {
+	ApplicationCommandType,
+	ContextMenuCommandBuilder,
+	InteractionContextType,
+	MessageContextMenuCommandInteraction,
+	MessageFlags,
+} from "discord.js";
 import { ContextMenuCommand, useContextMenuCommand } from "../../base/Command.js";
 import ZentBot from "../../base/ZentBot.js";
 import prisma from "../../libs/prisma.js";
@@ -7,7 +13,7 @@ import prisma from "../../libs/prisma.js";
 	new ContextMenuCommandBuilder()
 		.setName("Delete character's message")
 		.setContexts(InteractionContextType.Guild)
-		.setType(ApplicationCommandType.Message)
+		.setType(ApplicationCommandType.Message),
 )
 export default class DeleteCharMessageCommand extends ContextMenuCommand {
 	public async execute(interaction: MessageContextMenuCommandInteraction) {
@@ -26,7 +32,7 @@ export default class DeleteCharMessageCommand extends ContextMenuCommand {
 			where: { id: targetMessage.id },
 			include: {
 				character: true,
-			}
+			},
 		});
 
 		if (!characterMessage) {

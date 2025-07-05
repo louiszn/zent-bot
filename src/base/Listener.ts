@@ -14,15 +14,12 @@ export abstract class Listener<E extends keyof ClientEvents> {
 }
 
 export interface ListenerConstructor<E extends keyof ClientEvents> {
-	new(client: ZentBot<true>): Listener<E>;
+	new (client: ZentBot<true>): Listener<E>;
 	eventName: E;
 	once: boolean;
 }
 
-export function useListener<E extends keyof ClientEvents>(
-	event: E,
-	once = false
-) {
+export function useListener<E extends keyof ClientEvents>(event: E, once = false) {
 	return function <T extends typeof Listener<E>>(constructor: T) {
 		const correctConstructor = constructor as T & ListenerConstructor<E>;
 

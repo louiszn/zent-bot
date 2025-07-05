@@ -1,14 +1,20 @@
-import { ApplicationCommandType, ContextMenuCommandBuilder, InteractionContextType, MessageContextMenuCommandInteraction, MessageFlags } from "discord.js";
+import {
+	ApplicationCommandType,
+	ContextMenuCommandBuilder,
+	InteractionContextType,
+	MessageContextMenuCommandInteraction,
+	MessageFlags,
+} from "discord.js";
 import { ContextMenuCommand, useContextMenuCommand } from "../../base/Command.js";
 import ZentBot from "../../base/ZentBot.js";
 import prisma from "../../libs/prisma.js";
 import { getCharacterInformationEmbed } from "../../libs/character.js";
 
 @useContextMenuCommand(
-	new ContextMenuCommandBuilder()	
+	new ContextMenuCommandBuilder()
 		.setName("Get character information")
 		.setContexts(InteractionContextType.Guild)
-		.setType(ApplicationCommandType.Message)
+		.setType(ApplicationCommandType.Message),
 )
 export default class GetCharacterInfoCommand extends ContextMenuCommand {
 	public async execute(interaction: MessageContextMenuCommandInteraction<"cached">) {

@@ -1,10 +1,20 @@
-import { GuildTextBasedChannel, Message, PermissionFlagsBits, SendableChannels, Webhook } from "discord.js";
+import {
+	GuildTextBasedChannel,
+	Message,
+	PermissionFlagsBits,
+	SendableChannels,
+	Webhook,
+} from "discord.js";
 import { Listener, useListener } from "../base/Listener.js";
 
 import prisma from "../libs/prisma.js";
 import ZentBot from "../base/ZentBot.js";
 
-import { getReplyPreview, getUserCharacters, MAX_MESSAGE_CONTENT_LENGTH } from "../libs/character.js";
+import {
+	getReplyPreview,
+	getUserCharacters,
+	MAX_MESSAGE_CONTENT_LENGTH,
+} from "../libs/character.js";
 import { getWebhook } from "../libs/webhook.js";
 
 @useListener("messageCreate")
@@ -15,7 +25,12 @@ export default class CharacterMessageListener extends Listener<"messageCreate"> 
 		}
 
 		// These permissions are required for deleting messages and creating webhooks.
-		if (!message.guild.members.me?.permissions.has([PermissionFlagsBits.ManageMessages, PermissionFlagsBits.ManageWebhooks])) {
+		if (
+			!message.guild.members.me?.permissions.has([
+				PermissionFlagsBits.ManageMessages,
+				PermissionFlagsBits.ManageWebhooks,
+			])
+		) {
 			return;
 		}
 
@@ -33,7 +48,7 @@ export default class CharacterMessageListener extends Listener<"messageCreate"> 
 		const lowercaseContent = message.content.toLowerCase();
 
 		const character = characters.find(
-			(char) => char.prefix && lowercaseContent.startsWith(char.prefix.toLowerCase())
+			(char) => char.prefix && lowercaseContent.startsWith(char.prefix.toLowerCase()),
 		);
 
 		if (!character) {
@@ -49,7 +64,7 @@ export default class CharacterMessageListener extends Listener<"messageCreate"> 
 		if (!contentToSend && !message.attachments.size) {
 			return;
 		}
-		
+
 		if (contentToSend.length > MAX_MESSAGE_CONTENT_LENGTH) {
 			return;
 		}
@@ -83,9 +98,7 @@ export default class CharacterMessageListener extends Listener<"messageCreate"> 
 			const characterMessage = await webhook.send({
 				username: character.name || character.tag,
 				avatarURL: character.avatarURL || undefined,
-				content: replyPreview
-					? `${replyPreview}\n${contentToSend}`
-					: contentToSend,
+				content: replyPreview ? `${replyPreview}\n${contentToSend}` : contentToSend,
 				threadId: message.channel.isThread() ? message.channelId : undefined,
 				files: message.attachments.map((attachment) => ({
 					name: attachment.name,
@@ -100,7 +113,7 @@ export default class CharacterMessageListener extends Listener<"messageCreate"> 
 					characterId: character.id,
 					repliedMessageId: message.reference?.messageId,
 					replyPreview,
-				}
+				},
 			});
 		} catch (error) {
 			console.error("Failed to send webhook message:", error);

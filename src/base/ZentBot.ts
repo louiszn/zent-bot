@@ -2,7 +2,6 @@ import { Client, Collection, GatewayIntentBits, Snowflake, Webhook } from "disco
 
 import config from "../config.js";
 
-import { ContextMenuCommand, HybridCommand, loadCommandRegistry, PrefixCommand, SlashCommand } from "./Command.js";
 import { loadListenerRegistry } from "./Listener.js";
 import CommandManager from "../libs/CommandManager.js";
 
@@ -28,10 +27,7 @@ export default class ZentBot<Ready extends boolean = boolean> extends Client<Rea
 	public async initialize() {
 		this.rest.setToken(config.botToken);
 
-		await Promise.all([
-			this.commandManager.loadCommands(),
-			this.loadListeners(),
-		]);
+		await Promise.all([this.commandManager.loadCommands(), this.loadListeners()]);
 
 		this.once("ready", this.onReady);
 
@@ -46,9 +42,8 @@ export default class ZentBot<Ready extends boolean = boolean> extends Client<Rea
 		for (const constructor of registry) {
 			const instance = new constructor(this as ZentBot<true>);
 
-			this[constructor.once ? "once" : "on"](
-				constructor.eventName,
-				(...args) => instance.execute(...args)
+			this[constructor.once ? "once" : "on"](constructor.eventName, (...args) =>
+				instance.execute(...args),
 			);
 
 			count++;
