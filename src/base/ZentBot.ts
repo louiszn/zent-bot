@@ -5,14 +5,11 @@ import config from "../config.js";
 
 import CommandManager from "./command/CommandManager.js";
 
-import type { Component } from "./Component.js";
 import ListenerRegistry from "./listener/ListenerRegistry.js";
 import logger from "../libs/logger.js";
 
 export default class ZentBot<Ready extends boolean = boolean> extends Client<Ready> {
 	public commandManager: CommandManager<Ready>;
-
-	public components: Collection<string, Component>;
 
 	public botWebhooks: Collection<Snowflake, Webhook> = new Collection(); // key is channel ID
 
@@ -28,7 +25,6 @@ export default class ZentBot<Ready extends boolean = boolean> extends Client<Rea
 		});
 
 		this.commandManager = new CommandManager(this);
-		this.components = new Collection();
 	}
 
 	public async initialize() {
