@@ -1,6 +1,6 @@
 services:
   bot:
-    build: .
+    image: zent-bot:latest
     container_name: zent-bot
     env_file:
       - .env
