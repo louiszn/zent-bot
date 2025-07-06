@@ -1,0 +1,53 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "stable" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+     
+      - name: Build and save Docker image
+        run: |
+          docker build -t zent-bot:latest .
+          docker save zent-bot:latest | gzip > zent-bot.tar.gz
+    
+      - name: Transfer Docker image to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          source: "zent-bot.tar.gz,docker-compose.yml"
+          target: "/tmp/zent-bot"
+
+      - name: Copy and deploy to server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            cd /tmp/zent-bot
+          
+            docker load < zent-bot.tar.gz
+
+            docker compose -f docker-compose.yml down || true
+
+            echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" > .env
+            echo "CLIENT_ID=${{ secrets.CLIENT_ID }}" >> .env
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+
+            docker compose -f docker-compose.yml up -d
+
+            rm zent-bot.tar.gz
+            docker image prune -f

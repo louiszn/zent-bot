@@ -1,0 +1,6 @@
+services:
+  bot:
+    build: .
+    container_name: zent-bot
+    env_file:
+      - .env
