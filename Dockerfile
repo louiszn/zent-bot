@@ -23,4 +23,6 @@ COPY --from=builder /app/zent-bot/dist ./dist
 
 ENV NODE_ENV=production
 
+RUN npm run deloy
+
 CMD ["npm", "start"]
