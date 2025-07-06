@@ -4,6 +4,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app/zent-bot
 
 COPY package*.json ./
+COPY tsconfig*.json ./
 
 RUN npm ci
 
