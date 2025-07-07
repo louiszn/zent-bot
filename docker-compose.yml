@@ -2,5 +2,6 @@ services:
   bot:
     image: zent-bot:latest
     container_name: zent-bot
+    restart: unless-stopped
     env_file:
       - .env
