@@ -54,11 +54,11 @@ jobs:
           
             docker load < zent-bot.tar.gz
 
-            docker compose -f docker-compose.yml down || true
-
             echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" > .env
             echo "CLIENT_ID=${{ secrets.CLIENT_ID }}" >> .env
             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+
+            docker compose -f docker-compose.yml down || true
 
             docker compose -f docker-compose.yml up -d
 
