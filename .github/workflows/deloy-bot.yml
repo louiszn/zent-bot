@@ -34,6 +34,8 @@ jobs:
             Port ${{ secrets.SERVER_PORT }}
             ProxyCommand cloudflared access ssh --hostname %h
             IdentityFile ssh_private_key
+            StrictHostKeyChecking no
+            UserKnownHostsFile=/dev/null
           EOF
           
       - name: Transfer Docker image to server
