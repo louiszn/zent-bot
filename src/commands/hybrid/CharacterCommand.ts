@@ -4,7 +4,11 @@ import type {
 	SlashCommandStringOption,
 } from "discord.js";
 import {
+	ActionRowBuilder,
 	AttachmentBuilder,
+	ButtonBuilder,
+	ButtonStyle,
+	ComponentType,
 	EmbedBuilder,
 	InteractionContextType,
 	MessageFlags,
@@ -123,11 +127,17 @@ const getCharacterOption = (option: SlashCommandStringOption) =>
 		.addSubcommand((subcommand) =>
 			subcommand
 				.setName("info")
-				.setDescription("Show character's information.")
+				.setDescription("Show character information.")
 				.addStringOption(getCharacterOption)
 				.addUserOption((option) =>
-					option.setName("user").setDescription("Choose a user to their character's information."),
+					option.setName("user").setDescription("Choose a user to their character information."),
 				),
+		)
+		.addSubcommand((subcommand) =>
+			subcommand
+				.setName("delete")
+				.setDescription("Delete a character.")
+				.addStringOption(getCharacterOption),
 		),
 	prefixTriggers: ["character", "char"],
 })
@@ -185,6 +195,9 @@ export default class CharacterCommand extends HybridCommand {
 			case "info":
 				await this.onInfo(context, args);
 				break;
+			case "delete":
+				await this.onDelete(context, args);
+				break;
 		}
 	}
 
@@ -223,8 +236,86 @@ export default class CharacterCommand extends HybridCommand {
 		await createUserCharacter(context.user.id, tag);
 
 		await context.send(
-			`Created new character with tag \`${tag}\`. You can also change character's tag later.`,
+			`Created new character with tag \`${tag}\`. You can also change character tag and name later.`,
 		);
+	}
+
+	private async onDelete(context: HybridContext, args: string[]) {
+		let character: Character | null;
+
+		if (context.isInteraction()) {
+			const characterId = context.source.options.getString("character", true);
+			character = await getUserCharacterById(context.user.id, characterId);
+		} else {
+			const characterTag = sanitize(args[2] || "").toLowerCase();
+			character = await getUserCharacterByTag(context.user.id, characterTag);
+		}
+
+		if (!character) {
+			await context.send({
+				content: "Couldn't find any character.",
+				flags: MessageFlags.Ephemeral,
+			});
+
+			return;
+		}
+
+		const displayName = getDisplayNameWithTag(character);
+
+		const message = await context.send({
+			content: `Are you sure you want to delete character ${displayName}?`,
+			components: [
+				new ActionRowBuilder<ButtonBuilder>().setComponents(
+					new ButtonBuilder()
+						.setCustomId("character:delete:yes")
+						.setLabel("Yes")
+						.setStyle(ButtonStyle.Danger)
+						.setEmoji("🗑️"),
+					new ButtonBuilder()
+						.setCustomId("character:delete:no")
+						.setLabel("No")
+						.setStyle(ButtonStyle.Secondary)
+						.setEmoji("❌"),
+				),
+			],
+		});
+
+		const collector = message.createMessageComponentCollector({
+			componentType: ComponentType.Button,
+			filter: (interaction) => interaction.user.id === context.user.id,
+			time: 30_000,
+		});
+
+		collector.on("collect", async (interaction) => {
+			switch (interaction.customId) {
+				case "character:delete:yes":
+					await prisma.character.delete({
+						where: { id: character.id },
+					});
+
+					await message.edit(`Successfully deleted character ${displayName}`);
+
+					break;
+				case "character:delete:no":
+					await message.delete();
+					break;
+			}
+
+			collector.stop();
+		});
+
+		collector.on("ignore", async (interaction) => {
+			await interaction.reply({
+				content: "You can't use this button!",
+				flags: MessageFlags.Ephemeral,
+			});
+		});
+
+		collector.on("end", async (collected) => {
+			if (collected.size === 0) {
+				await message.delete();
+			}
+		});
 	}
 
 	private async onEdit(context: HybridContext, args: string[]) {
@@ -263,10 +354,10 @@ export default class CharacterCommand extends HybridCommand {
 				await this.onAvatarEdit(context, args, character);
 				break;
 			default:
-				await context.send(`- \`_char edit [tag] name [...name]\`: Update character's name
-- \`_char edit [tag] tag [new tag]\`: Update character's tag
-- \`_char edit [tag] prefix [prefix]\`: Update character's prefix
-- \`_char edit [tag] tag [avatar]\`: Update character's avatar`);
+				await context.send(`- \`_char edit [tag] name [...name]\`: Update character name
+- \`_char edit [tag] tag [new tag]\`: Update character tag
+- \`_char edit [tag] prefix [prefix]\`: Update character prefix
+- \`_char edit [tag] tag [avatar]\`: Update character avatar`);
 				break;
 		}
 	}
@@ -518,7 +609,9 @@ export default class CharacterCommand extends HybridCommand {
 		await updateUserCharacterById(context.user.id, character.id, { prefix });
 
 		await context.send(
-			`Successfully changed character prefix from \`${character.prefix}\` to \`${prefix}\`.`,
+			character.prefix
+				? `Successfully changed character prefix from \`${character.prefix}\` to \`${prefix}\`.`
+				: `Successfully set character prefix to \`${prefix}\`.`,
 		);
 	}
 }
