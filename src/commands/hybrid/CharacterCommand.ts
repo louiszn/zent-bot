@@ -278,6 +278,7 @@ export default class CharacterCommand extends HybridCommand {
 						.setEmoji("❌"),
 				),
 			],
+			embeds: [getCharacterInformationEmbed(character)],
 		});
 
 		const collector = message.createMessageComponentCollector({
