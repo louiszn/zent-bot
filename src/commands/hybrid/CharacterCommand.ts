@@ -293,10 +293,15 @@ export default class CharacterCommand extends HybridCommand {
 						where: { id: character.id },
 					});
 
-					await message.edit(`Successfully deleted character ${displayName}`);
+					// A better alternative to .edit() and .deferUpdate()
+					await interaction.update({
+						content: `Successfully deleted character ${displayName}`,
+						components: [],
+					});
 
 					break;
 				case "character:delete:no":
+					// No need to handle interaction update anymore because the original message will be deleted
 					await message.delete();
 					break;
 			}
@@ -312,6 +317,8 @@ export default class CharacterCommand extends HybridCommand {
 		});
 
 		collector.on("end", async (collected) => {
+			// User can only interact the buttons once
+			// If the collected size is 0, that means user haven't pressed
 			if (collected.size === 0) {
 				await message.delete();
 			}
