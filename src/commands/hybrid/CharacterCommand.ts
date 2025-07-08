@@ -123,10 +123,10 @@ const getCharacterOption = (option: SlashCommandStringOption) =>
 		.addSubcommand((subcommand) =>
 			subcommand
 				.setName("info")
-				.setDescription("Show character's information.")
+				.setDescription("Show character information.")
 				.addStringOption(getCharacterOption)
 				.addUserOption((option) =>
-					option.setName("user").setDescription("Choose a user to their character's information."),
+					option.setName("user").setDescription("Choose a user to their character information."),
 				),
 		),
 	prefixTriggers: ["character", "char"],
@@ -223,7 +223,7 @@ export default class CharacterCommand extends HybridCommand {
 		await createUserCharacter(context.user.id, tag);
 
 		await context.send(
-			`Created new character with tag \`${tag}\`. You can also change character's tag later.`,
+			`Created new character with tag \`${tag}\`. You can also change character tag and name later.`,
 		);
 	}
 
@@ -263,10 +263,10 @@ export default class CharacterCommand extends HybridCommand {
 				await this.onAvatarEdit(context, args, character);
 				break;
 			default:
-				await context.send(`- \`_char edit [tag] name [...name]\`: Update character's name
-- \`_char edit [tag] tag [new tag]\`: Update character's tag
-- \`_char edit [tag] prefix [prefix]\`: Update character's prefix
-- \`_char edit [tag] tag [avatar]\`: Update character's avatar`);
+				await context.send(`- \`_char edit [tag] name [...name]\`: Update character name
+- \`_char edit [tag] tag [new tag]\`: Update character tag
+- \`_char edit [tag] prefix [prefix]\`: Update character prefix
+- \`_char edit [tag] tag [avatar]\`: Update character avatar`);
 				break;
 		}
 	}
@@ -518,7 +518,9 @@ export default class CharacterCommand extends HybridCommand {
 		await updateUserCharacterById(context.user.id, character.id, { prefix });
 
 		await context.send(
-			`Successfully changed character prefix from \`${character.prefix}\` to \`${prefix}\`.`,
+			character.prefix
+				? `Successfully changed character prefix from \`${character.prefix}\` to \`${prefix}\`.`
+				: `Successfully set character prefix to \`${prefix}\`.`,
 		);
 	}
 }
