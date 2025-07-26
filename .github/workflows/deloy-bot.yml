@@ -19,37 +19,24 @@ jobs:
           docker build -t zent-bot:latest .
           docker save zent-bot:latest | gzip > zent-bot.tar.gz
 
-      - name: Setup cloudflared
-        uses: AnimMouse/setup-cloudflared@v2
-
-      - name: Setup SSH
-        run: |
-          echo "${{ secrets.SERVER_SSH_KEY }}" > ssh_private_key
-          chmod 600 ssh_private_key
-
-          cat <<EOF > ssh_config
-          Host ssh_server
-            HostName ${{ secrets.SERVER_HOST }}
-            User ${{ secrets.SERVER_USER }}
-            Port ${{ secrets.SERVER_PORT }}
-            ProxyCommand cloudflared access ssh --hostname %h
-            IdentityFile ssh_private_key
-            StrictHostKeyChecking no
-            UserKnownHostsFile=/dev/null
-          EOF
-          
       - name: Transfer Docker image to server
-        run: |
-          ssh -F ssh_config ssh_server << EOF
-            rm -rf /tmp/zent-bot
-            mkdir -p /tmp/zent-bot
-          EOF
-          
-          scp -F ssh_config zent-bot.tar.gz docker-compose.yml ssh_server:/tmp/zent-bot/
+        uses: appleboy/scp-action@v0.1.7
+        with: 
+          host: ${{ secrets.SERVER_HOST }}
+          port: ${{ secrets.SERVER_PORT }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "zent-bot.tar.gz,docker-compose.yml"
+          target: "/tmp/zent-bot/"
 
       - name: Copy and deploy to server
-        run: |
-          ssh -F ssh_config ssh_server << EOF
+        uses: appleboy/ssh-action@v1.0.3
+        with: 
+          host: ${{ secrets.SERVER_HOST }}
+          port: ${{ secrets.SERVER_PORT }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
             cd /tmp/zent-bot
           
             docker load < zent-bot.tar.gz
@@ -64,5 +51,3 @@ jobs:
 
             rm zent-bot.tar.gz
             docker image prune -f
-          EOF
-          

@@ -28,3 +28,9 @@ model Message {
 
 	character Character? @relation(fields: [characterId], references: [id], onDelete: SetNull)
 }
+
+model RbdUserCount {
+	userId String @id
+	count Int @default(1)
+	lastUpdated DateTime @updatedAt
+}
