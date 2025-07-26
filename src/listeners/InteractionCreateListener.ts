@@ -1,4 +1,4 @@
-import type { CommandInteraction, Interaction } from "discord.js";
+import type { AutocompleteInteraction, CommandInteraction, Interaction } from "discord.js";
 import { DiscordAPIError, MessageFlags, RESTJSONErrorCodes } from "discord.js";
 import { Listener, useListener } from "../base/listener/Listener.js";
 import { HybridCommand, SlashHybridContext } from "../base/command/Command.js";
@@ -7,6 +7,13 @@ import logger from "../libs/logger.js";
 @useListener("interactionCreate")
 export default class InteractionCreateListener extends Listener<"interactionCreate"> {
 	public async execute(interaction: Interaction) {
+		// Autocomplete is also handled by command
+		if (interaction.isCommand() || interaction.isAutocomplete()) {
+			await this.handleCommandInteraction(interaction);
+		}
+	}
+
+	private async handleCommandInteraction(interaction: CommandInteraction | AutocompleteInteraction) {
 		const { client } = this;
 
 		if (interaction.isChatInputCommand()) {
