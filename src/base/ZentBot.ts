@@ -33,7 +33,11 @@ export default class ZentBot<Ready extends boolean = boolean> extends Client<Rea
 	public async initialize() {
 		this.rest.setToken(config.botToken);
 
-		await Promise.all([this.commandManager.loadCommands(), this.loadListeners()]);
+		await Promise.all([
+			this.commandManager.loadCommands(),
+			this.componentManager.loadComponents(),
+			this.loadListeners(),
+		]);
 
 		this.once("ready", this.onReady);
 

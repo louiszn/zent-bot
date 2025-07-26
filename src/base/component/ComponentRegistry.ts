@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 import logger from "../../libs/logger.js";
 
 export default class ComponentRegistry {
-	private static components: ComponentConstructor[];
+	private static components: ComponentConstructor[] = [];
 	private static isFrozen = false;
 
 	public static addComponent(constructor: ComponentConstructor) {
