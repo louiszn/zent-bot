@@ -55,7 +55,7 @@ export default class RBDCommand extends SlashCommand {
 			AddReactions: true,
 		});
 
-		await interaction.channel.send({
+		await interaction.reply({
 			content: "@everyone RBD đã bắt đầu!",
 		});
 	}
