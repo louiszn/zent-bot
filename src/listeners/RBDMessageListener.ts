@@ -16,12 +16,16 @@ export default class RBDMessageListener extends Listener<"messageCreate"> {
 		}
 
 		const withoutSpoilers = message.content.replace(/\|\|.*?\|\|/gs, "");
-		const hasUnspoileredLinks = /https?:\/\/\S+/gi.test(withoutSpoilers);
+		const hasUnspoileredLinks = /https?:\/\/(?!tenor\.com|media\.tenor\.com)\S+/gi.test(
+			withoutSpoilers,
+		);
 		const allMediaSpoilered = message.attachments.every((a) => a.spoiler);
 
 		if (hasUnspoileredLinks || !allMediaSpoilered) {
 			await message.delete();
-			await message.channel.send(`${message.author} các nội dung chứa link, ảnh hay video phải được làm ẩn.`);
+			await message.channel.send(
+				`${message.author} các nội dung chứa link, ảnh hay video phải được làm ẩn.`,
+			);
 			return;
 		}
 
