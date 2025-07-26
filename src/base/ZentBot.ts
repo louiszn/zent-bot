@@ -4,12 +4,14 @@ import { Client, Collection, GatewayIntentBits } from "discord.js";
 import config from "../config.js";
 
 import CommandManager from "./command/CommandManager.js";
+import ComponentManager from "./component/ComponentManager.js";
 
 import ListenerRegistry from "./listener/ListenerRegistry.js";
 import logger from "../libs/logger.js";
 
 export default class ZentBot<Ready extends boolean = boolean> extends Client<Ready> {
 	public commandManager: CommandManager<Ready>;
+	public componentManager: ComponentManager<Ready>;
 
 	public botWebhooks: Collection<Snowflake, Webhook> = new Collection(); // key is channel ID
 
@@ -25,6 +27,7 @@ export default class ZentBot<Ready extends boolean = boolean> extends Client<Rea
 		});
 
 		this.commandManager = new CommandManager(this);
+		this.componentManager = new ComponentManager(this);
 	}
 
 	public async initialize() {
