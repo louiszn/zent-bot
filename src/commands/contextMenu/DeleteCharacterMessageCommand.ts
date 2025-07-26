@@ -16,7 +16,7 @@ import logger from "../../libs/logger.js";
 		.setType(ApplicationCommandType.Message),
 )
 export default class DeleteCharMessageCommand extends ContextMenuCommand {
-	public async execute(interaction: MessageContextMenuCommandInteraction) {
+	public async execute(interaction: MessageContextMenuCommandInteraction<"cached">) {
 		const { targetMessage } = interaction;
 
 		if (!targetMessage.webhookId) {

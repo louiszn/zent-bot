@@ -1,19 +1,18 @@
 import type {
 	AutocompleteInteraction,
 	ContextMenuCommandBuilder,
+	ContextMenuCommandInteraction,
 	Guild,
 	GuildTextBasedChannel,
 	InteractionCallbackResponse,
 	InteractionReplyOptions,
 	InteractionResponse,
-	MessageContextMenuCommandInteraction,
 	MessageCreateOptions,
 	MessagePayload,
 	RESTPostAPIApplicationCommandsJSONBody,
 	SlashCommandBuilder,
 	SlashCommandSubcommandsOnlyBuilder,
 	User,
-	UserContextMenuCommandInteraction,
 } from "discord.js";
 
 import { ChatInputCommandInteraction, Message } from "discord.js";
@@ -37,9 +36,7 @@ export abstract class SlashCommand extends BaseCommand {
 }
 
 export abstract class ContextMenuCommand extends BaseCommand {
-	abstract override execute(
-		interaction: UserContextMenuCommandInteraction | MessageContextMenuCommandInteraction,
-	): Promise<void>;
+	abstract override execute(interaction: ContextMenuCommandInteraction<"cached">): Promise<void>;
 }
 
 export abstract class HybridCommand extends BaseCommand {
