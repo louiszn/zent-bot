@@ -15,7 +15,7 @@ export default class RBDMessageListener extends Listener<"messageCreate"> {
 			return;
 		}
 
-		if (this.isMessageSpoiled(message)) {
+		if (!this.isMessageSpoiled(message)) {
 			await message.delete();
 			await message.channel.send(
 				`${message.author} các nội dung chứa link, ảnh hay video phải được làm ẩn.`,
