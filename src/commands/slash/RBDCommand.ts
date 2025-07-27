@@ -1,31 +1,25 @@
 import type { ChatInputCommandInteraction } from "discord.js";
-import { EmbedBuilder, MessageFlags, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
+import {
+	bold,
+	ContainerBuilder,
+	MessageFlags,
+	PermissionFlagsBits,
+	SlashCommandBuilder,
+} from "discord.js";
 import { SlashCommand, useSlashCommand } from "../../base/command/Command.js";
 import config from "../../config.js";
 import prisma from "../../libs/prisma.js";
-import type { Prisma } from "@prisma/client";
-
-const EMOJIS_MAP: Record<number, string> = {
-	1: ":first_place:",
-	2: ":second_place:",
-	3: ":third_place:",
-};
+import type { RbdUserCount } from "@prisma/client";
 
 @useSlashCommand(
 	new SlashCommandBuilder()
 		.setName("rbd")
 		.setDescription("RBD command")
+		.addSubcommand((subcommand) => subcommand.setName("start").setDescription("Bắt đầu sự kiện"))
+		.addSubcommand((subcommand) => subcommand.setName("stop").setDescription("Dừng sự kiện"))
+		.addSubcommand((subcommand) => subcommand.setName("reset").setDescription("Reset bộ đếm"))
 		.addSubcommand((subcommand) =>
-			subcommand.setName("start").setDescription("Bắt đầu sự kiện"),
-		)
-		.addSubcommand((subcommand) =>
-			subcommand.setName("stop").setDescription("Dừng sự kiện"),
-		)
-		.addSubcommand((subcommand) =>
-			subcommand.setName("reset").setDescription("Reset bộ đếm"),
-		)
-		.addSubcommand((subcommand) => 
-			subcommand.setName("leaderboard").setDescription("Xem bảng xếp hạng")
+			subcommand.setName("leaderboard").setDescription("Xem bảng xếp hạng"),
 		),
 )
 export default class RBDCommand extends SlashCommand {
@@ -67,7 +61,7 @@ export default class RBDCommand extends SlashCommand {
 	}
 
 	private async onStart(interaction: ChatInputCommandInteraction<"cached">) {
-		if (!this.checkAdminAndreply(interaction)) {
+		if (!(await this.checkAdminAndreply(interaction))) {
 			return;
 		}
 
@@ -90,7 +84,7 @@ export default class RBDCommand extends SlashCommand {
 	}
 
 	private async onStop(interaction: ChatInputCommandInteraction<"cached">) {
-		if (!this.checkAdminAndreply(interaction)) {
+		if (!(await this.checkAdminAndreply(interaction))) {
 			return;
 		}
 
@@ -123,12 +117,16 @@ export default class RBDCommand extends SlashCommand {
 		}
 
 		await interaction.channel.send({
-			embeds: [this.getLeaderboardEmbed(counters)],
+			components: [this.getLeaderboardContainer(counters)],
+			flags: MessageFlags.IsComponentsV2,
+			allowedMentions: {
+				parse: [],
+			},
 		});
 	}
 
 	private async onReset(interaction: ChatInputCommandInteraction<"cached">) {
-		if (!this.checkAdminAndreply(interaction)) {
+		if (!(await this.checkAdminAndreply(interaction))) {
 			return;
 		}
 
@@ -150,21 +148,47 @@ export default class RBDCommand extends SlashCommand {
 		}
 
 		await interaction.reply({
-			embeds: [this.getLeaderboardEmbed(counters)],
+			components: [this.getLeaderboardContainer(counters, interaction.user.id)],
+			flags: MessageFlags.IsComponentsV2,
+			allowedMentions: {
+				parse: [],
+			},
 		});
 	}
 
-	private getLeaderboardEmbed(counters: Prisma.RbdUserCountCreateInput[]) {
-		const embed = new EmbedBuilder()
-			.setTitle("Bảng xếp hạng")
-			.setDescription(
-				counters
-					.map((c, i) => `${EMOJIS_MAP[i + 1] || i + 1} <@${c.userId}> - ${c.count} tin nhắn`)
-					.join("\n"),
-			)
-			.setColor(0xfacc15)
-			.setTimestamp();
+	private getLeaderboardContainer(counters: RbdUserCount[], userId?: string) {
+		const container = new ContainerBuilder().setAccentColor(0xfacc15);
 
-		return embed;
+		const medals = ["🥇", "🥈", "🥉"];
+
+		const formatRank = (rank: number) => {
+			return medals[rank - 1] ?? `${rank}.`;
+		};
+
+		const formatContent = (rank: number, counter: RbdUserCount) => {
+			return `${formatRank(rank)} <@${counter.userId}> - ${counter.count.toLocaleString("vi")} tin nhắn${counter.userId === userId ? " <<<" : ""}`;
+		};
+
+		const topRanks: string[] = [];
+		const ranks: string[] = [];
+
+		for (const [i, counter] of counters.entries()) {
+			const content = formatContent(i + 1, counter);
+
+			if (i < 3) {
+				topRanks.push(userId === counter.userId ? bold(content) : content);
+			} else {
+				ranks.push(userId === counter.userId ? bold(content) : content);
+			}
+		}
+
+		container
+			.addTextDisplayComponents((display) =>
+				display.setContent(["## Bảng xếp hạng", topRanks.join("\n")].join("\n")),
+			)
+			.addSeparatorComponents((seperator) => seperator)
+			.addTextDisplayComponents((display) => display.setContent(ranks.join("\n")));
+
+		return container;
 	}
 }
