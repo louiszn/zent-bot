@@ -67,7 +67,7 @@ export default class RBDCommand extends SlashCommand {
 	}
 
 	private async onStart(interaction: ChatInputCommandInteraction<"cached">) {
-		if (!this.checkAdminAndreply(interaction)) {
+		if (!(await this.checkAdminAndreply(interaction))) {
 			return;
 		}
 
@@ -90,7 +90,7 @@ export default class RBDCommand extends SlashCommand {
 	}
 
 	private async onStop(interaction: ChatInputCommandInteraction<"cached">) {
-		if (!this.checkAdminAndreply(interaction)) {
+		if (!(await this.checkAdminAndreply(interaction))) {
 			return;
 		}
 
@@ -128,7 +128,7 @@ export default class RBDCommand extends SlashCommand {
 	}
 
 	private async onReset(interaction: ChatInputCommandInteraction<"cached">) {
-		if (!this.checkAdminAndreply(interaction)) {
+		if (!(await this.checkAdminAndreply(interaction))) {
 			return;
 		}
 
