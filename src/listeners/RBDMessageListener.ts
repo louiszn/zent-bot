@@ -1,4 +1,4 @@
-import type { Message } from "discord.js";
+import type { Message, MessageSnapshot } from "discord.js";
 import { Listener, useListener } from "../base/listener/Listener.js";
 import config from "../config.js";
 import prisma from "../libs/prisma.js";
@@ -15,13 +15,7 @@ export default class RBDMessageListener extends Listener<"messageCreate"> {
 			return;
 		}
 
-		const withoutSpoilers = message.content.replace(/\|\|.*?\|\|/gs, "");
-		const hasUnspoileredLinks = /https?:\/\/(?!tenor\.com|media\.tenor\.com)\S+/gi.test(
-			withoutSpoilers,
-		);
-		const allMediaSpoilered = message.attachments.every((a) => a.spoiler);
-
-		if (hasUnspoileredLinks || !allMediaSpoilered) {
+		if (this.isMessageSpoiled(message)) {
 			await message.delete();
 			await message.channel.send(
 				`${message.author} các nội dung chứa link, ảnh hay video phải được làm ẩn.`,
@@ -39,5 +33,19 @@ export default class RBDMessageListener extends Listener<"messageCreate"> {
 				count: 1,
 			},
 		});
+	}
+
+	private isMessageSpoiled(message: Message | MessageSnapshot) {
+		const withoutSpoilers = message.content.replace(/\|\|.*?\|\|/gs, "");
+		const hasUnspoileredLinks = /https?:\/\/(?!tenor\.com|media\.tenor\.com)\S+/gi.test(
+			withoutSpoilers,
+		);
+		const allMediaSpoilered = message.attachments.every((a) => a.spoiler);
+
+		return (
+			!hasUnspoileredLinks &&
+			allMediaSpoilered &&
+			message.messageSnapshots?.every(this.isMessageSpoiled)
+		);
 	}
 }
