@@ -1,8 +1,9 @@
 import type { ChatInputCommandInteraction } from "discord.js";
-import { EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
+import { EmbedBuilder, MessageFlags, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import { SlashCommand, useSlashCommand } from "../../base/command/Command.js";
 import config from "../../config.js";
 import prisma from "../../libs/prisma.js";
+import type { Prisma } from "@prisma/client";
 
 const EMOJIS_MAP: Record<number, string> = {
 	1: ":first_place:",
@@ -14,12 +15,17 @@ const EMOJIS_MAP: Record<number, string> = {
 	new SlashCommandBuilder()
 		.setName("rbd")
 		.setDescription("RBD command")
-		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
 		.addSubcommand((subcommand) =>
-			subcommand.setName("start").setDescription("Start the event and counter"),
+			subcommand.setName("start").setDescription("Bắt đầu sự kiện"),
 		)
 		.addSubcommand((subcommand) =>
-			subcommand.setName("stop").setDescription("Stop the event andd reset database"),
+			subcommand.setName("stop").setDescription("Dừng sự kiện"),
+		)
+		.addSubcommand((subcommand) =>
+			subcommand.setName("reset").setDescription("Reset bộ đếm"),
+		)
+		.addSubcommand((subcommand) => 
+			subcommand.setName("leaderboard").setDescription("Xem bảng xếp hạng")
 		),
 )
 export default class RBDCommand extends SlashCommand {
@@ -38,10 +44,33 @@ export default class RBDCommand extends SlashCommand {
 			case "stop":
 				await this.onStop(interaction);
 				break;
+			case "reset":
+				await this.onReset(interaction);
+				break;
+			case "leaderboard":
+				await this.onLeaderboard(interaction);
+				break;
 		}
 	}
 
+	private async checkAdminAndreply(interaction: ChatInputCommandInteraction<"cached">) {
+		if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+			await interaction.reply({
+				content: "Cậu không có quyền để dùng lệnh này.",
+				flags: MessageFlags.Ephemeral,
+			});
+
+			return false;
+		}
+
+		return true;
+	}
+
 	private async onStart(interaction: ChatInputCommandInteraction<"cached">) {
+		if (!this.checkAdminAndreply(interaction)) {
+			return;
+		}
+
 		if (
 			!interaction.channel ||
 			!interaction.channel.isTextBased() ||
@@ -61,6 +90,10 @@ export default class RBDCommand extends SlashCommand {
 	}
 
 	private async onStop(interaction: ChatInputCommandInteraction<"cached">) {
+		if (!this.checkAdminAndreply(interaction)) {
+			return;
+		}
+
 		if (
 			!interaction.channel ||
 			!interaction.channel.isTextBased() ||
@@ -89,6 +122,39 @@ export default class RBDCommand extends SlashCommand {
 			return;
 		}
 
+		await interaction.channel.send({
+			embeds: [this.getLeaderboardEmbed(counters)],
+		});
+	}
+
+	private async onReset(interaction: ChatInputCommandInteraction<"cached">) {
+		if (!this.checkAdminAndreply(interaction)) {
+			return;
+		}
+
+		await prisma.rbdUserCount.deleteMany();
+
+		await interaction.reply("Đã reset dữ liệu thành công");
+	}
+
+	private async onLeaderboard(interaction: ChatInputCommandInteraction<"cached">) {
+		const counters = await prisma.rbdUserCount.findMany({
+			orderBy: [{ count: "desc" }, { lastUpdated: "desc" }],
+		});
+
+		if (counters.length === 0) {
+			await interaction.reply({
+				content: "Không có dữ liệu nào được ghi nhận trong sự kiện RBD.",
+			});
+			return;
+		}
+
+		await interaction.reply({
+			embeds: [this.getLeaderboardEmbed(counters)],
+		});
+	}
+
+	private getLeaderboardEmbed(counters: Prisma.RbdUserCountCreateInput[]) {
 		const embed = new EmbedBuilder()
 			.setTitle("Bảng xếp hạng")
 			.setDescription(
@@ -99,10 +165,6 @@ export default class RBDCommand extends SlashCommand {
 			.setColor(0xfacc15)
 			.setTimestamp();
 
-		await interaction.channel.send({
-			embeds: [embed],
-		});
-
-		await prisma.rbdUserCount.deleteMany();
+		return embed;
 	}
 }
