@@ -3,6 +3,10 @@ import { Listener, useListener } from "../base/listener/Listener.js";
 import config from "../config.js";
 import prisma from "../libs/prisma.js";
 
+const WHITELISTED_DOMAINS = ["tenor.com"] as const;
+
+const LINK_REGEX = /https?:\/\/\S+/gi;
+
 @useListener("messageCreate")
 export default class RBDMessageListener extends Listener<"messageCreate"> {
 	public override async execute(message: Message): Promise<void> {
@@ -15,7 +19,7 @@ export default class RBDMessageListener extends Listener<"messageCreate"> {
 			return;
 		}
 
-		if (!this.isMessageSpoiled(message)) {
+		if (!this.isMessageSpoilered(message)) {
 			await message.delete();
 			await message.channel.send(
 				`${message.author} các nội dung chứa link, ảnh hay video phải được làm ẩn.`,
@@ -35,17 +39,37 @@ export default class RBDMessageListener extends Listener<"messageCreate"> {
 		});
 	}
 
-	private isMessageSpoiled(message: Message | MessageSnapshot) {
-		const withoutSpoilers = message.content.replace(/\|\|.*?\|\|/gs, "");
-		const hasUnspoileredLinks = /https?:\/\/(?!tenor\.com|media\.tenor\.com)\S+/gi.test(
-			withoutSpoilers,
-		);
-		const allMediaSpoilered = message.attachments.every((a) => a.spoiler);
+	private isMessageSpoilered(message: Message | MessageSnapshot) {
+		// Remove all text between double pipes (||), which is used in Discord to mark spoilers.
+		// This leaves only unspoilered content for us to check for unspoilered links.
+		const withoutSpoilersContent = message.content.replace(/\|\|.*?\|\|/gs, "");
+
+		// Find all unspoilered links in the content.
+		const unspoileredLinks = [...withoutSpoilersContent.matchAll(LINK_REGEX)];
+
+		// Check if any of these links are not whitelisted
+		const hasUnspoileredLinks = unspoileredLinks.some((match) => {
+			const url = match[0];
+
+			try {
+				const { hostname } = new URL(url);
+
+				return !WHITELISTED_DOMAINS.some(
+					(domain) => hostname === domain || hostname.endsWith(`.${domain}`),
+				);
+			} catch {
+				return true;
+			}
+		});
+
+		// Check for any attachments that are not marked as spoilered.
+		const hasUnspoileredMedia = message.attachments.some((a) => !a.spoiler);
 
 		return (
 			!hasUnspoileredLinks &&
-			allMediaSpoilered &&
-			message.messageSnapshots?.every(this.isMessageSpoiled)
+			!hasUnspoileredMedia &&
+			// Recursively check forwarded (snapshot) messages
+			message.messageSnapshots?.every(this.isMessageSpoilered)
 		);
 	}
 }
