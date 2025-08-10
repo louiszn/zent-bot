@@ -10,8 +10,8 @@ export default class ComponentManager<Ready extends boolean = boolean> {
 
 	public constructor(public client: ZentBot<Ready>) {}
 
-	public async loadComponents() {
-		await ComponentRegistry.loadModules();
+	public async load() {
+		await ComponentRegistry.load();
 
 		const componentsRegistry = ComponentRegistry.getComponents();
 
@@ -29,6 +29,6 @@ export default class ComponentManager<Ready extends boolean = boolean> {
 			}
 		}
 
-		logger.success(`Successfully loaded ${count} components.`);
+		logger.success(`Successfully loaded ${count}/${componentsRegistry.length} components.`);
 	}
 }

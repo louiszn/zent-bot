@@ -61,7 +61,7 @@ export default class CommandRegistry {
 		}
 	}
 
-	private static freezeRegistry() {
+	private static freeze() {
 		if (this.isFrozen) {
 			return;
 		}
@@ -74,8 +74,8 @@ export default class CommandRegistry {
 		this.isFrozen = true;
 	}
 
-	public static async loadModules() {
-		this.throwOnFrozen("loadModules() was called while the command registry is frozen");
+	public static async load() {
+		this.throwOnFrozen("load() was called while the command registry is frozen");
 
 		const files = await glob("dist/commands/**/*.js");
 
@@ -94,6 +94,6 @@ export default class CommandRegistry {
 
 		logger.success(`Loaded ${count} command files`);
 
-		this.freezeRegistry();
+		this.freeze();
 	}
 }

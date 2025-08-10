@@ -1,13 +1,17 @@
 import type {
 	AutocompleteInteraction,
+	ChatInputCommandInteraction,
 	CommandInteraction,
+	ContextMenuCommandInteraction,
 	Interaction,
 	MessageComponentInteraction,
 	ModalSubmitInteraction,
 } from "discord.js";
 import { DiscordAPIError, MessageFlags, RESTJSONErrorCodes } from "discord.js";
+
 import { Listener, useListener } from "../base/listener/Listener.js";
 import { HybridCommand, SlashHybridContext } from "../base/command/Command.js";
+
 import logger from "../libs/logger.js";
 
 @useListener("interactionCreate")
@@ -24,74 +28,94 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 	private async handleCommandInteraction(
 		interaction: CommandInteraction | AutocompleteInteraction,
 	) {
-		const { client } = this;
-
 		if (!interaction.inCachedGuild()) {
 			return;
 		}
 
+		if (interaction.isAutocomplete()) {
+			await this.handleAutocomplete(interaction);
+			return;
+		}
+
 		if (interaction.isChatInputCommand()) {
-			const { commandName } = interaction;
-			const command = client.commandManager.slashCommands.get(commandName);
+			await this.handleChatInputCommand(interaction);
+			return;
+		}
 
-			if (!command) {
-				logger.warn(`Unknown slash command: ${commandName}`);
-				return;
+		if (interaction.isContextMenuCommand()) {
+			await this.handleContextMenuCommand(interaction);
+			return;
+		}
+	}
+
+	private async handleAutocomplete(interaction: AutocompleteInteraction<"cached">): Promise<void> {
+		const { client } = this;
+		const { commandName } = interaction;
+
+		const command = client.commandManager.slashCommands.get(commandName);
+
+		if (!command) {
+			logger.warn(`Unknown slash command: ${commandName}`);
+			return;
+		}
+
+		if (!command.autocomplete) {
+			logger.warn(
+				`Command '${commandName}' used autocomplete option but no methods were declared.`,
+			);
+			return;
+		}
+
+		try {
+			await command.autocomplete(interaction);
+		} catch (error) {
+			logger.error("Failed to respond autocomplete:", error);
+		}
+	}
+
+	private async handleChatInputCommand(interaction: ChatInputCommandInteraction<"cached">) {
+		const { client } = this;
+		const { commandName } = interaction;
+
+		const command = client.commandManager.slashCommands.get(commandName);
+
+		if (!command) {
+			logger.warn(`Unknown slash command: ${commandName}`);
+			return;
+		}
+
+		try {
+			if (command instanceof HybridCommand) {
+				await command.execute(new SlashHybridContext(interaction), []);
+			} else {
+				await command.execute(interaction);
 			}
+		} catch (error) {
+			await this.handleRepliableInteractionError(interaction, error);
+		}
+	}
 
-			try {
-				if (command instanceof HybridCommand) {
-					await command.execute(new SlashHybridContext(interaction), []);
-				} else {
-					await command.execute(interaction);
-				}
-			} catch (error) {
-				await this.handleInteractionError(interaction, error);
-			}
-		} else if (interaction.isContextMenuCommand()) {
-			if (!interaction.inCachedGuild()) {
-				const { commandName } = interaction;
-				const command = client.commandManager.contextMenuCommands.get(commandName);
+	private async handleContextMenuCommand(interaction: ContextMenuCommandInteraction<"cached">): Promise<void> {
+		const { client } = this;
+		const { commandName } = interaction;
 
-				if (!command) {
-					console.warn(`Unknown context menu command: ${commandName}`);
-					return;
-				}
+		const command = client.commandManager.contextMenuCommands.get(commandName);
 
-				try {
-					await command.execute(interaction);
-				} catch (error) {
-					await this.handleInteractionError(interaction, error);
-				}
-			} else if (interaction.isAutocomplete()) {
-				const { commandName } = interaction;
+		if (!command) {
+			logger.warn(`Unknown context menu command: ${commandName}`);
+			return;
+		}
 
-				const command = client.commandManager.slashCommands.get(commandName);
-
-				if (!command) {
-					console.warn(`Unknown slash command: ${commandName}`);
-					return;
-				}
-
-				if (!command.autocomplete) {
-					console.warn(
-						`Command '${commandName}' used autocomplete option but no methods were declared.`,
-					);
-					return;
-				}
-
-				try {
-					await command.autocomplete(interaction);
-				} catch (error) {
-					logger.error("Failed to respond autocomplete:", error);
-				}
-			}
+		try {
+			await command.execute(interaction);
+		} catch (error) {
+			await this.handleRepliableInteractionError(interaction, error);
 		}
 	}
 
 	private async handleComponentInteraction(
 		interaction: MessageComponentInteraction | ModalSubmitInteraction,
-	) {
+	): Promise<void> {
 		const { client } = this;
 
 		if (!interaction.inCachedGuild()) {
@@ -114,23 +138,30 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 		try {
 			if (interaction.isAnySelectMenu()) {
 				await component.executeSelectMenu?.(interaction, args);
-			} else if (interaction.isButton()) {
+				return;
+			}
+			
+			if (interaction.isButton()) {
 				await component.executeButton?.(interaction, args);
-			} else if (interaction.isModalSubmit()) {
+				return;
+			}
+			
+			if (interaction.isModalSubmit()) {
 				await component.executeModalSubmit?.(interaction, args);
+				return;
 			}
 		} catch (error) {
-			await this.handleInteractionError(interaction, error);
+			await this.handleRepliableInteractionError(interaction, error);
 		}
 	}
 
-	private async handleInteractionError(
+	private async handleRepliableInteractionError(
 		interaction:
 			| CommandInteraction<"cached">
 			| MessageComponentInteraction<"cached">
 			| ModalSubmitInteraction<"cached">,
 		error: unknown,
-	) {
+	): Promise<void> {
 		let target: string;
 
 		if ("commandName" in interaction) {

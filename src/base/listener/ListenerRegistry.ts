@@ -25,13 +25,13 @@ export default class ListenerRegistry {
 		}
 	}
 	
-	private static freezeRegistry() {
+	private static freeze() {
 		Object.freeze(this.listeners);
 		this.isFrozen = true;
 	}
 
-	public static async loadModules(): Promise<void> {
-		this.throwOnFrozen("loadModules() was called while the listener registry is frozen");
+	public static async load(): Promise<void> {
+		this.throwOnFrozen("load() was called while the listener registry is frozen");
 
 		const files = await glob("dist/listeners/**/*.js");
 
@@ -46,6 +46,6 @@ export default class ListenerRegistry {
 	
 		logger.success(`Loaded ${count} listener files`);
 
-		this.freezeRegistry();
+		this.freeze();
 	}
 }
