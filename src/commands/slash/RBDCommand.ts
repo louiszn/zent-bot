@@ -11,8 +11,8 @@ import config from "../../config.js";
 import prisma from "../../libs/prisma.js";
 import type { RbdUserCount } from "@prisma/client";
 
-@useSlashCommand(
-	new SlashCommandBuilder()
+@useSlashCommand({
+	data: new SlashCommandBuilder()
 		.setName("rbd")
 		.setDescription("RBD command")
 		.addSubcommand((subcommand) => subcommand.setName("start").setDescription("Bắt đầu sự kiện"))
@@ -21,7 +21,8 @@ import type { RbdUserCount } from "@prisma/client";
 		.addSubcommand((subcommand) =>
 			subcommand.setName("leaderboard").setDescription("Xem bảng xếp hạng"),
 		),
-)
+	guildIds: [config.rbd.guildId]
+})
 export default class RBDCommand extends SlashCommand {
 	public override async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<void> {
 		if (
