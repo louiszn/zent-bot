@@ -13,79 +13,114 @@ import type {
 } from "./Command.js";
 
 import type ZentBot from "../ZentBot.js";
+
 import CommandRegistry from "./CommandRegistry.js";
 import logger from "../../libs/logger.js";
+
+type RegisterCommandFn<T extends Command, C extends CommandConstructor> = (instance: T, constructor: C) => boolean;
+
+interface CommandRegistries {
+	slash: readonly SlashCommandConstructor[];
+	prefix: readonly PrefixCommandConstructor[];
+	contextMenu: readonly ContextMenuCommandConstructor[];
+	hybrid: readonly HybridCommandConstructor[];
+}
+
+interface CommandRegistrationCounts {
+	slash: number;
+	prefix: number;
+	contextMenu: number;
+	hybrid: number;
+}
 
 export default class CommandManager<Ready extends boolean = boolean> {
 	public slashCommands: Collection<string, SlashCommand | HybridCommand> = new Collection();
 	public prefixCommands: Collection<string, PrefixCommand | HybridCommand> = new Collection();
 	public contextMenuCommands: Collection<string, ContextMenuCommand> = new Collection();
 
-	public constructor(public client: ZentBot<Ready>) {}
+	public constructor(public client: ZentBot<Ready>) { }
 
-	public async loadCommands(): Promise<void> {
-		await CommandRegistry.loadModules();
+	public async load(): Promise<void> {
+		await CommandRegistry.load();
 
-		const slashCommandsRegistry = CommandRegistry.getSlashCommands();
-		const prefixCommandsRegistry = CommandRegistry.getPrefixCommands();
-		const contextMenuCommandsRegistry = CommandRegistry.getContextMenuCommands();
-		const hybridCommandsRegistry = CommandRegistry.getHybridCommands();
+		const registries = this.getCommandRegistries();
 
-		const slashCommandCount = this.registerCommandType<SlashCommand, SlashCommandConstructor>(
-			slashCommandsRegistry,
+		const registrationCounts = this.registerAllCommandTypes(registries);
+
+		this.logRegistrationSummary(registries, registrationCounts);
+	}
+
+	private getCommandRegistries(): CommandRegistries {
+		return {
+			slash: CommandRegistry.getSlashCommands(),
+			prefix: CommandRegistry.getPrefixCommands(),
+			contextMenu: CommandRegistry.getContextMenuCommands(),
+			hybrid: CommandRegistry.getHybridCommands(),
+		};
+	}
+
+	private registerAllCommandTypes(registries: CommandRegistries): CommandRegistrationCounts {
+		const slashCommandCount = this.registerCommands<SlashCommand, SlashCommandConstructor>(
+			registries.slash,
 			"slash",
 			(instance, { data: { name } }) => this.registerSlashCommand(name, instance),
 		);
 
-		const prefixCommandCount = this.registerCommandType<PrefixCommand, PrefixCommandConstructor>(
-			prefixCommandsRegistry,
+		const prefixCommandCount = this.registerCommands<PrefixCommand, PrefixCommandConstructor>(
+			registries.prefix,
 			"prefix",
 			(instance, { triggers }) => this.registerPrefixCommand(triggers, instance),
 		);
 
-		const contextMenuCommandCount = this.registerCommandType<
+		const contextMenuCommandCount = this.registerCommands<
 			ContextMenuCommand,
 			ContextMenuCommandConstructor
-		>(contextMenuCommandsRegistry, "context menu", (instance, { data: { name } }) =>
+		>(registries.contextMenu, "context menu", (instance, { data: { name } }) =>
 			this.registerContextMenuCommand(name, instance),
 		);
 
-		const hybridCommandCount = this.registerCommandType<HybridCommand, HybridCommandConstructor>(
-			hybridCommandsRegistry,
+		const hybridCommandCount = this.registerCommands<HybridCommand, HybridCommandConstructor>(
+			registries.hybrid,
 			"hybrid",
 			(instance, { applicationCommandData: { name }, prefixTriggers }) =>
 				this.registerHybridCommand(name, prefixTriggers, instance),
 		);
 
-		const registryCount = [
-			slashCommandsRegistry,
-			prefixCommandsRegistry,
-			contextMenuCommandsRegistry,
-			hybridCommandsRegistry
-		].reduce((total, registry) => total + registry.length, 0);
-
-		const commandCount = [
-			slashCommandCount,
-			prefixCommandCount,
-			contextMenuCommandCount,
-			hybridCommandCount
-		].reduce((total, count) => total + count, 0);
-
-		logger.success(
-			[
-				`Registered total ${commandCount}/${registryCount} commands:`,
-				`    + 📤 Slash:        ${slashCommandCount}/${slashCommandsRegistry.length}`,
-				`    + 📝 Prefix:       ${prefixCommandCount}/${prefixCommandsRegistry.length}`,
-				`    + 📋 Context Menu: ${contextMenuCommandCount}/${contextMenuCommandsRegistry.length}`,
-				`    + ⚡ Hybrid:       ${hybridCommandCount}/${hybridCommandsRegistry.length}`,
-			].join("\n"),
-		);
+		return {
+			slash: slashCommandCount,
+			prefix: prefixCommandCount,
+			contextMenu: contextMenuCommandCount,
+			hybrid: hybridCommandCount,
+		};
 	}
 
-	private registerCommandType<T extends Command, C extends CommandConstructor>(
+	private logRegistrationSummary(
+		registries: CommandRegistries,
+		counts: CommandRegistrationCounts,
+	) {
+		const totalRegistryCount = Object.values(registries).reduce(
+			(total, registry) => total + registry.length,
+			0
+		);
+
+		const totalRegisteredCount = Object.values(counts).reduce(
+			(total, count) => total + count,
+			0
+		);
+
+		logger.success([
+			`Registered total ${totalRegisteredCount}/${totalRegistryCount} commands:`,
+			`    + 📤 Slash:        ${counts.slash}/${registries.slash.length}`,
+			`    + 📝 Prefix:       ${counts.prefix}/${registries.prefix.length}`,
+			`    + 📋 Context Menu: ${counts.contextMenu}/${registries.contextMenu.length}`,
+			`    + ⚡ Hybrid:       ${counts.hybrid}/${registries.hybrid.length}`,
+		].join("\n"));
+	}
+
+	private registerCommands<T extends Command, C extends CommandConstructor>(
 		registry: readonly C[],
 		type: string,
-		registerFn: (instance: T, constructor: C) => boolean,
+		registerFn: RegisterCommandFn<T, C>,
 	) {
 		let count = 0;
 
@@ -112,19 +147,6 @@ export default class CommandManager<Ready extends boolean = boolean> {
 		return this.registerInCollection(this.slashCommands, name, instance, "slash command");
 	}
 
-	private registerPrefixTrigger(trigger: string, instance: PrefixCommand | HybridCommand): boolean {
-		return this.registerInCollection(this.prefixCommands, trigger, instance, "prefix trigger");
-	}
-
-	private registerContextMenuCommand(name: string, instance: ContextMenuCommand): boolean {
-		return this.registerInCollection(
-			this.contextMenuCommands,
-			name,
-			instance,
-			"context menu command",
-		);
-	}
-
 	private registerPrefixCommand(
 		triggers: string[],
 		instance: PrefixCommand | HybridCommand,
@@ -148,6 +170,19 @@ export default class CommandManager<Ready extends boolean = boolean> {
 		}
 
 		return true;
+	}
+
+	private registerPrefixTrigger(trigger: string, instance: PrefixCommand | HybridCommand): boolean {
+		return this.registerInCollection(this.prefixCommands, trigger, instance, "prefix trigger");
+	}
+
+	private registerContextMenuCommand(name: string, instance: ContextMenuCommand): boolean {
+		return this.registerInCollection(
+			this.contextMenuCommands,
+			name,
+			instance,
+			"context menu command",
+		);
 	}
 
 	private registerInCollection<T extends Command>(

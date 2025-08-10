@@ -34,8 +34,8 @@ export default class ZentBot<Ready extends boolean = boolean> extends Client<Rea
 		this.rest.setToken(config.botToken);
 
 		await Promise.all([
-			this.commandManager.loadCommands(),
-			this.componentManager.loadComponents(),
+			this.commandManager.load(),
+			this.componentManager.load(),
 			this.loadListeners(),
 		]);
 
@@ -47,7 +47,7 @@ export default class ZentBot<Ready extends boolean = boolean> extends Client<Rea
 	private async loadListeners() {
 		let count = 0;
 
-		await ListenerRegistry.loadModules();
+		await ListenerRegistry.load();
 
 		const constructors = ListenerRegistry.getListeners();
 

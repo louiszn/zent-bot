@@ -6,7 +6,7 @@ import config from "./config.js";
 import CommandRegistry from "./base/command/CommandRegistry.js";
 import logger from "./libs/logger.js";
 
-await CommandRegistry.loadModules();
+await CommandRegistry.load();
 
 const rest = new REST({ version: "10" }).setToken(config.botToken);
 

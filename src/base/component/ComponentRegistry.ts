@@ -22,7 +22,7 @@ export default class ComponentRegistry {
 		}
 	}
 
-	private static freezeRegistry() {
+	private static freeze() {
 		if (this.isFrozen) {
 			return;
 		}
@@ -32,8 +32,8 @@ export default class ComponentRegistry {
 		this.isFrozen = true;
 	}
 
-	public static async loadModules() {
-		this.throwOnFrozen("loadModules() was called while the component registry is frozen");
+	public static async load() {
+		this.throwOnFrozen("load() was called while the component registry is frozen");
 
 		const files = await fg.glob("dist/components/**/*.js");
 
@@ -45,6 +45,6 @@ export default class ComponentRegistry {
 			}
 		}
 
-		this.freezeRegistry();
+		this.freeze();
 	}
 }
