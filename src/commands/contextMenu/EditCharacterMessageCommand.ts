@@ -13,12 +13,12 @@ import { ContextMenuCommand, useContextMenuCommand } from "../../base/command/Co
 import prisma from "../../libs/prisma.js";
 import { MAX_MESSAGE_CONTENT_LENGTH } from "../../libs/character.js";
 
-@useContextMenuCommand(
-	new ContextMenuCommandBuilder()
+@useContextMenuCommand({
+	data: new ContextMenuCommandBuilder()
 		.setName("Edit character's message")
 		.setContexts(InteractionContextType.Guild)
 		.setType(ApplicationCommandType.Message),
-)
+})
 export default class EditCharacterMessageCommand extends ContextMenuCommand {
 	public async execute(interaction: MessageContextMenuCommandInteraction<"cached">) {
 		const { targetMessage } = interaction;

@@ -4,7 +4,9 @@ import { PrefixCommand, usePrefixCommand } from "../../base/command/Command.js";
 import { extractId } from "../../utils/string.js";
 import prisma from "../../libs/prisma.js";
 
-@usePrefixCommand(["delete", "del"])
+@usePrefixCommand({
+	triggers: ["delete", "del"]
+})
 export default class DeleteCommand extends PrefixCommand {
 	public async execute(message: Message<true>, args: string[]): Promise<void> {
 		let targetMessage: Message<true> | undefined;

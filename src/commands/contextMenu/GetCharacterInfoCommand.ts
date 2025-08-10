@@ -9,12 +9,12 @@ import { ContextMenuCommand, useContextMenuCommand } from "../../base/command/Co
 import prisma from "../../libs/prisma.js";
 import { getCharacterInformationEmbed } from "../../libs/character.js";
 
-@useContextMenuCommand(
-	new ContextMenuCommandBuilder()
+@useContextMenuCommand({
+	data: new ContextMenuCommandBuilder()
 		.setName("Get character information")
 		.setContexts(InteractionContextType.Guild)
 		.setType(ApplicationCommandType.Message),
-)
+})
 export default class GetCharacterInfoCommand extends ContextMenuCommand {
 	public async execute(interaction: MessageContextMenuCommandInteraction<"cached">) {
 		const characterMessage = await prisma.message.findFirst({
