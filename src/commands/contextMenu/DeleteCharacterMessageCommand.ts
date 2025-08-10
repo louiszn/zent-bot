@@ -9,12 +9,12 @@ import { ContextMenuCommand, useContextMenuCommand } from "../../base/command/Co
 import prisma from "../../libs/prisma.js";
 import logger from "../../libs/logger.js";
 
-@useContextMenuCommand(
-	new ContextMenuCommandBuilder()
+@useContextMenuCommand({
+	data: new ContextMenuCommandBuilder()
 		.setName("Delete character's message")
 		.setContexts(InteractionContextType.Guild)
 		.setType(ApplicationCommandType.Message),
-)
+})
 export default class DeleteCharMessageCommand extends ContextMenuCommand {
 	public async execute(interaction: MessageContextMenuCommandInteraction<"cached">) {
 		const { targetMessage } = interaction;

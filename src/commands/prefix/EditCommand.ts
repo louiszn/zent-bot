@@ -5,7 +5,9 @@ import { extractId } from "../../utils/string.js";
 import prisma from "../../libs/prisma.js";
 import { getWebhook } from "../../libs/webhook.js";
 
-@usePrefixCommand(["edit"])
+@usePrefixCommand({
+	triggers: ["edit"]
+})
 export default class DeleteCommand extends PrefixCommand {
 	public async execute(message: Message<true>, args: string[]): Promise<void> {
 		let targetMessage: Message<true> | undefined;

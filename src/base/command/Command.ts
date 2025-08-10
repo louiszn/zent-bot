@@ -21,7 +21,7 @@ import type ZentBot from "../ZentBot.js";
 import CommandRegistry from "./CommandRegistry.js";
 
 export abstract class BaseCommand {
-	public constructor(protected client: ZentBot<true>) {}
+	public constructor(protected client: ZentBot<true>) { }
 
 	abstract execute(...args: unknown[]): Promise<void>;
 }
@@ -146,23 +146,24 @@ export class PrefixHybridContext extends BaseHybridContext {
 
 export type HybridContext = SlashHybridContext | PrefixHybridContext;
 
-export interface PrefixCommandConstructor {
-	new (client: ZentBot<true>): PrefixCommand;
+export interface BaseCommandConstructor<C> {
+	new(client: ZentBot<true>): C;
+	guildIds?: string[];
+}
+
+export interface PrefixCommandConstructor extends BaseCommandConstructor<PrefixCommand> {
 	triggers: string[];
 }
 
-export interface SlashCommandConstructor {
-	new (client: ZentBot<true>): SlashCommand;
+export interface SlashCommandConstructor extends BaseCommandConstructor<SlashCommand> {
 	data: RESTPostAPIApplicationCommandsJSONBody;
 }
 
-export interface ContextMenuCommandConstructor {
-	new (client: ZentBot<true>): ContextMenuCommand;
+export interface ContextMenuCommandConstructor extends BaseCommandConstructor<ContextMenuCommand> {
 	data: RESTPostAPIApplicationCommandsJSONBody;
 }
 
-export interface HybridCommandConstructor {
-	new (client: ZentBot<true>): HybridCommand;
+export interface HybridCommandConstructor extends BaseCommandConstructor<HybridCommand> {
 	applicationCommandData: RESTPostAPIApplicationCommandsJSONBody;
 	prefixTriggers: string[];
 }
@@ -173,45 +174,75 @@ export type CommandConstructor =
 	| ContextMenuCommandConstructor
 	| HybridCommandConstructor;
 
-export function usePrefixCommand(triggers: string[]) {
+export interface BaseUseCommandOptions {
+	guildIds?: string[];
+}
+
+export interface UsePrefixCommandOptions extends BaseUseCommandOptions {
+	triggers: string[]
+}
+
+export interface UseSlashCommandOptions extends BaseUseCommandOptions {
+	data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
+}
+
+export interface UseContextMenuCommandOptions extends BaseUseCommandOptions {
+	data: ContextMenuCommandBuilder;
+}
+
+export interface UseHybridCommandOptions extends BaseUseCommandOptions {
+	applicationCommandData: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
+	prefixTriggers: string[];
+}
+
+export function usePrefixCommand(options: UsePrefixCommandOptions) {
+	const { triggers, guildIds } = options;
+
 	return function <T extends typeof PrefixCommand>(constructor: T) {
 		const correctConstructor = constructor as T & PrefixCommandConstructor;
 
 		correctConstructor.triggers = triggers;
+		correctConstructor.guildIds = guildIds;
 
 		CommandRegistry.addPrefixCommand(correctConstructor);
 	};
 }
 
-export function useSlashCommand(data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder) {
+export function useSlashCommand(options: UseSlashCommandOptions) {
+	const { data, guildIds } = options;
+
 	return function <T extends typeof SlashCommand>(constructor: T) {
 		const correctConstructor = constructor as T & SlashCommandConstructor;
 
 		correctConstructor.data = data.toJSON();
+		correctConstructor.guildIds = guildIds;
 
 		CommandRegistry.addSlashCommand(constructor as T & SlashCommandConstructor);
 	};
 }
 
-export function useContextMenuCommand(data: ContextMenuCommandBuilder) {
+export function useContextMenuCommand(options: UseContextMenuCommandOptions) {
+	const { data, guildIds } = options;
+
 	return function <T extends typeof ContextMenuCommand>(constructor: T) {
 		const correctConstructor = constructor as T & ContextMenuCommandConstructor;
 
 		correctConstructor.data = data.toJSON();
+		correctConstructor.guildIds = guildIds;
 
 		CommandRegistry.addContextMenuCommand(correctConstructor);
 	};
 }
 
-export function useHybridCommand(options: {
-	applicationCommandData: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
-	prefixTriggers: string[];
-}) {
+export function useHybridCommand(options: UseHybridCommandOptions) {
+	const { applicationCommandData, prefixTriggers, guildIds } = options;
+
 	return function <T extends typeof HybridCommand>(constructor: T) {
 		const correctConstructor = constructor as T & HybridCommandConstructor;
 
-		correctConstructor.applicationCommandData = options.applicationCommandData.toJSON();
-		correctConstructor.prefixTriggers = options.prefixTriggers;
+		correctConstructor.applicationCommandData = applicationCommandData.toJSON();
+		correctConstructor.prefixTriggers = prefixTriggers;
+		correctConstructor.guildIds = guildIds;
 
 		CommandRegistry.addHybridCommand(correctConstructor);
 	};
