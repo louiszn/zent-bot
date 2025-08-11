@@ -7,7 +7,7 @@ const config = {
 	rbd: {
 		guildId: process.env.RBD_GUILD_ID!,
 		channelId: process.env.RBD_CHANNEL_ID!,
-	}
+	},
 };
 
 export default config;

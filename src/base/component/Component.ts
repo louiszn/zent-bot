@@ -10,8 +10,14 @@ export abstract class Component {
 	public constructor(protected client: ZentBot<true>) {}
 
 	public executeButton?(interaction: ButtonInteraction<"cached">, args: string[]): Promise<void>;
-	public executeSelectMenu?(interaction: AnySelectMenuInteraction<"cached">, args: string[]): Promise<void>;
-	public executeModalSubmit?(interaction: ModalSubmitInteraction<"cached">, args: string[]): Promise<void>;
+	public executeSelectMenu?(
+		interaction: AnySelectMenuInteraction<"cached">,
+		args: string[],
+	): Promise<void>;
+	public executeModalSubmit?(
+		interaction: ModalSubmitInteraction<"cached">,
+		args: string[],
+	): Promise<void>;
 }
 
 export interface ComponentConstructor {

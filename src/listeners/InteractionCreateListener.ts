@@ -95,7 +95,9 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 		}
 	}
 
-	private async handleContextMenuCommand(interaction: ContextMenuCommandInteraction<"cached">): Promise<void> {
+	private async handleContextMenuCommand(
+		interaction: ContextMenuCommandInteraction<"cached">,
+	): Promise<void> {
 		const { client } = this;
 		const { commandName } = interaction;
 
@@ -140,12 +142,12 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 				await component.executeSelectMenu?.(interaction, args);
 				return;
 			}
-			
+
 			if (interaction.isButton()) {
 				await component.executeButton?.(interaction, args);
 				return;
 			}
-			
+
 			if (interaction.isModalSubmit()) {
 				await component.executeModalSubmit?.(interaction, args);
 				return;

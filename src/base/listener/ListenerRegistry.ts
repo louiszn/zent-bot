@@ -24,7 +24,7 @@ export default class ListenerRegistry {
 			throw new Error(message);
 		}
 	}
-	
+
 	private static freeze() {
 		Object.freeze(this.listeners);
 		this.isFrozen = true;
@@ -43,7 +43,7 @@ export default class ListenerRegistry {
 				count++;
 			}),
 		);
-	
+
 		logger.success(`Loaded ${count} listener files`);
 
 		this.freeze();

@@ -21,7 +21,7 @@ import type ZentBot from "../ZentBot.js";
 import CommandRegistry from "./CommandRegistry.js";
 
 export abstract class BaseCommand {
-	public constructor(protected client: ZentBot<true>) { }
+	public constructor(protected client: ZentBot<true>) {}
 
 	abstract execute(...args: unknown[]): Promise<void>;
 }
@@ -147,7 +147,7 @@ export class PrefixHybridContext extends BaseHybridContext {
 export type HybridContext = SlashHybridContext | PrefixHybridContext;
 
 export interface BaseCommandConstructor<C> {
-	new(client: ZentBot<true>): C;
+	new (client: ZentBot<true>): C;
 	guildIds?: string[];
 }
 
@@ -179,7 +179,7 @@ export interface BaseUseCommandOptions {
 }
 
 export interface UsePrefixCommandOptions extends BaseUseCommandOptions {
-	triggers: string[]
+	triggers: string[];
 }
 
 export interface UseSlashCommandOptions extends BaseUseCommandOptions {

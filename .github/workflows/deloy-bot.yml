@@ -2,18 +2,16 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "stable" ]
+    branches: ["stable"]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-     
+
       - name: Build and save Docker image
         run: |
           docker build -t zent-bot:latest .
@@ -21,7 +19,7 @@ jobs:
 
       - name: Transfer Docker image to server
         uses: appleboy/scp-action@v0.1.7
-        with: 
+        with:
           host: ${{ secrets.SERVER_HOST }}
           port: ${{ secrets.SERVER_PORT }}
           username: ${{ secrets.SERVER_USER }}
@@ -31,14 +29,14 @@ jobs:
 
       - name: Copy and deploy to server
         uses: appleboy/ssh-action@v1.0.3
-        with: 
+        with:
           host: ${{ secrets.SERVER_HOST }}
           port: ${{ secrets.SERVER_PORT }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /tmp/zent-bot
-          
+
             docker load < zent-bot.tar.gz
 
             echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" > .env

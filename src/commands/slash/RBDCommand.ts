@@ -21,7 +21,7 @@ import type { RbdUserCount } from "@prisma/client";
 		.addSubcommand((subcommand) =>
 			subcommand.setName("leaderboard").setDescription("Xem bảng xếp hạng"),
 		),
-	guildIds: [config.rbd.guildId]
+	guildIds: [config.rbd.guildId],
 })
 export default class RBDCommand extends SlashCommand {
 	public override async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<void> {
