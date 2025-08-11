@@ -147,7 +147,7 @@ export class PrefixHybridContext extends BaseHybridContext {
 export type HybridContext = SlashHybridContext | PrefixHybridContext;
 
 export interface BaseCommandConstructor<C> {
-	new(client: ZentBot<true>): C;
+	new (client: ZentBot<true>): C;
 	guildIds?: string[];
 }
 
@@ -179,7 +179,7 @@ export interface BaseUseCommandOptions {
 }
 
 export interface UsePrefixCommandOptions extends BaseUseCommandOptions {
-	triggers: string[]
+	triggers: string[];
 }
 
 export interface UseSlashCommandOptions extends BaseUseCommandOptions {

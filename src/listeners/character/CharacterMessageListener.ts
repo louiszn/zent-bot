@@ -1,19 +1,19 @@
 import type { Message, Webhook } from "discord.js";
-import { PermissionFlagsBits } from "discord.js";
-import { Listener, useListener } from "../base/listener/Listener.js";
+import { Events, PermissionFlagsBits } from "discord.js";
+import { Listener, useListener } from "../../base/listener/Listener.js";
 
-import prisma from "../libs/prisma.js";
+import prisma from "../../libs/prisma.js";
 
 import {
 	getReplyPreview,
 	getUserCharacters,
 	MAX_MESSAGE_CONTENT_LENGTH,
-} from "../libs/character.js";
-import { getWebhook } from "../libs/webhook.js";
-import logger from "../libs/logger.js";
+} from "../../libs/character.js";
+import { getWebhook } from "../../libs/webhook.js";
+import logger from "../../libs/logger.js";
 
-@useListener("messageCreate")
-export default class CharacterMessageListener extends Listener<"messageCreate"> {
+@useListener(Events.MessageCreate)
+export default class CharacterMessageListener extends Listener<Events.MessageCreate> {
 	public async execute(message: Message) {
 		if (message.author.bot || !message.inGuild()) {
 			return;

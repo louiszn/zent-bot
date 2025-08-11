@@ -17,7 +17,10 @@ import type ZentBot from "../ZentBot.js";
 import CommandRegistry from "./CommandRegistry.js";
 import logger from "../../libs/logger.js";
 
-type RegisterCommandFn<T extends Command, C extends CommandConstructor> = (instance: T, constructor: C) => boolean;
+type RegisterCommandFn<T extends Command, C extends CommandConstructor> = (
+	instance: T,
+	constructor: C,
+) => boolean;
 
 interface CommandRegistries {
 	slash: readonly SlashCommandConstructor[];
@@ -34,11 +37,11 @@ interface CommandRegistrationCounts {
 }
 
 export default class CommandManager<Ready extends boolean = boolean> {
-	public slashCommands: Collection<string, SlashCommand | HybridCommand> = new Collection();
-	public prefixCommands: Collection<string, PrefixCommand | HybridCommand> = new Collection();
-	public contextMenuCommands: Collection<string, ContextMenuCommand> = new Collection();
+	public slashes: Collection<string, SlashCommand | HybridCommand> = new Collection();
+	public prefixes: Collection<string, PrefixCommand | HybridCommand> = new Collection();
+	public contextMenus: Collection<string, ContextMenuCommand> = new Collection();
 
-	public constructor(public client: ZentBot<Ready>) { }
+	public constructor(public client: ZentBot<Ready>) {}
 
 	public async load(): Promise<void> {
 		await CommandRegistry.load();
@@ -94,27 +97,23 @@ export default class CommandManager<Ready extends boolean = boolean> {
 		};
 	}
 
-	private logRegistrationSummary(
-		registries: CommandRegistries,
-		counts: CommandRegistrationCounts,
-	) {
+	private logRegistrationSummary(registries: CommandRegistries, counts: CommandRegistrationCounts) {
 		const totalRegistryCount = Object.values(registries).reduce(
 			(total, registry) => total + registry.length,
-			0
+			0,
 		);
 
-		const totalRegisteredCount = Object.values(counts).reduce(
-			(total, count) => total + count,
-			0
-		);
+		const totalRegisteredCount = Object.values(counts).reduce((total, count) => total + count, 0);
 
-		logger.success([
-			`Registered total ${totalRegisteredCount}/${totalRegistryCount} commands:`,
-			`    + 📤 Slash:        ${counts.slash}/${registries.slash.length}`,
-			`    + 📝 Prefix:       ${counts.prefix}/${registries.prefix.length}`,
-			`    + 📋 Context Menu: ${counts.contextMenu}/${registries.contextMenu.length}`,
-			`    + ⚡ Hybrid:       ${counts.hybrid}/${registries.hybrid.length}`,
-		].join("\n"));
+		logger.success(
+			[
+				`Registered total ${totalRegisteredCount}/${totalRegistryCount} commands:`,
+				`    + 📤 Slash:        ${counts.slash}/${registries.slash.length}`,
+				`    + 📝 Prefix:       ${counts.prefix}/${registries.prefix.length}`,
+				`    + 📋 Context Menu: ${counts.contextMenu}/${registries.contextMenu.length}`,
+				`    + ⚡ Hybrid:       ${counts.hybrid}/${registries.hybrid.length}`,
+			].join("\n"),
+		);
 	}
 
 	private registerCommands<T extends Command, C extends CommandConstructor>(
@@ -144,7 +143,7 @@ export default class CommandManager<Ready extends boolean = boolean> {
 	}
 
 	private registerSlashCommand(name: string, instance: SlashCommand | HybridCommand): boolean {
-		return this.registerInCollection(this.slashCommands, name, instance, "slash command");
+		return this.registerInCollection(this.slashes, name, instance, "slash command");
 	}
 
 	private registerPrefixCommand(
@@ -173,16 +172,11 @@ export default class CommandManager<Ready extends boolean = boolean> {
 	}
 
 	private registerPrefixTrigger(trigger: string, instance: PrefixCommand | HybridCommand): boolean {
-		return this.registerInCollection(this.prefixCommands, trigger, instance, "prefix trigger");
+		return this.registerInCollection(this.prefixes, trigger, instance, "prefix trigger");
 	}
 
 	private registerContextMenuCommand(name: string, instance: ContextMenuCommand): boolean {
-		return this.registerInCollection(
-			this.contextMenuCommands,
-			name,
-			instance,
-			"context menu command",
-		);
+		return this.registerInCollection(this.contextMenus, name, instance, "context menu command");
 	}
 
 	private registerInCollection<T extends Command>(

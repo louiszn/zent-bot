@@ -5,10 +5,15 @@ import type { Component } from "./Component.js";
 import ComponentRegistry from "./ComponentRegistry.js";
 import logger from "../../libs/logger.js";
 
-export default class ComponentManager<Ready extends boolean = boolean> {
+export default class ComponentManager<Ready extends boolean = boolean> extends Collection<
+	string,
+	Component
+> {
 	public components: Collection<string, Component> = new Collection();
 
-	public constructor(public client: ZentBot<Ready>) {}
+	public constructor(public client: ZentBot<Ready>) {
+		super();
+	}
 
 	public async load() {
 		await ComponentRegistry.load();

@@ -3,15 +3,10 @@ import { Client, Collection, GatewayIntentBits } from "discord.js";
 
 import config from "../config.js";
 
-import CommandManager from "./command/CommandManager.js";
-import ComponentManager from "./component/ComponentManager.js";
-
-import ListenerRegistry from "./listener/ListenerRegistry.js";
-import logger from "../libs/logger.js";
+import ZentManagerRegistry from "./ZentManagerRegistry.js";
 
 export default class ZentBot<Ready extends boolean = boolean> extends Client<Ready> {
-	public commandManager: CommandManager<Ready>;
-	public componentManager: ComponentManager<Ready>;
+	public managers: ZentManagerRegistry<Ready>;
 
 	public botWebhooks: Collection<Snowflake, Webhook> = new Collection(); // key is channel ID
 
@@ -26,49 +21,14 @@ export default class ZentBot<Ready extends boolean = boolean> extends Client<Rea
 			],
 		});
 
-		this.commandManager = new CommandManager(this);
-		this.componentManager = new ComponentManager(this);
+		this.managers = new ZentManagerRegistry(this);
 	}
 
 	public async initialize() {
 		this.rest.setToken(config.botToken);
 
-		await Promise.all([
-			this.commandManager.load(),
-			this.componentManager.load(),
-			this.loadListeners(),
-		]);
-
-		this.once("ready", this.onReady);
+		await this.managers.load();
 
 		await this.login(config.botToken);
-	}
-
-	private async loadListeners() {
-		let count = 0;
-
-		await ListenerRegistry.load();
-
-		const constructors = ListenerRegistry.getListeners();
-
-		for (const constructor of constructors) {
-			try {
-				const instance = new constructor(this as ZentBot<true>);
-
-				this[constructor.once ? "once" : "on"](constructor.eventName, (...args) =>
-					instance.execute(...args),
-				);
-
-				count++;
-			} catch (error) {
-				logger.error(`An error occurred while registering listener '${constructor.name}':`, error);
-			}
-		}
-
-		logger.success(`Registered total ${count}/${constructors.length} listeners`);
-	}
-
-	private async onReady(this: ZentBot<true>) {
-		logger.success(`Successfully logged in as ${this.user!.tag}`);
 	}
 }
