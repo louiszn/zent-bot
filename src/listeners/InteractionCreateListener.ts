@@ -7,15 +7,15 @@ import type {
 	MessageComponentInteraction,
 	ModalSubmitInteraction,
 } from "discord.js";
-import { DiscordAPIError, MessageFlags, RESTJSONErrorCodes } from "discord.js";
+import { DiscordAPIError, Events, MessageFlags, RESTJSONErrorCodes } from "discord.js";
 
 import { Listener, useListener } from "../base/listener/Listener.js";
 import { HybridCommand, SlashHybridContext } from "../base/command/Command.js";
 
 import logger from "../libs/logger.js";
 
-@useListener("interactionCreate")
-export default class InteractionCreateListener extends Listener<"interactionCreate"> {
+@useListener(Events.InteractionCreate)
+export default class InteractionCreateListener extends Listener<Events.InteractionCreate> {
 	public async execute(interaction: Interaction) {
 		// Autocomplete is also handled by command
 		if (interaction.isCommand() || interaction.isAutocomplete()) {
@@ -50,9 +50,10 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 
 	private async handleAutocomplete(interaction: AutocompleteInteraction<"cached">): Promise<void> {
 		const { client } = this;
+		const { managers } = client;
 		const { commandName } = interaction;
 
-		const command = client.commandManager.slashCommands.get(commandName);
+		const command = managers.commands.slashes.get(commandName);
 
 		if (!command) {
 			logger.warn(`Unknown slash command: ${commandName}`);
@@ -75,9 +76,11 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 
 	private async handleChatInputCommand(interaction: ChatInputCommandInteraction<"cached">) {
 		const { client } = this;
+		const { managers } = client;
+
 		const { commandName } = interaction;
 
-		const command = client.commandManager.slashCommands.get(commandName);
+		const command = managers.commands.slashes.get(commandName);
 
 		if (!command) {
 			logger.warn(`Unknown slash command: ${commandName}`);
@@ -99,9 +102,11 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 		interaction: ContextMenuCommandInteraction<"cached">,
 	): Promise<void> {
 		const { client } = this;
+		const { managers } = client;
+
 		const { commandName } = interaction;
 
-		const command = client.commandManager.contextMenuCommands.get(commandName);
+		const command = managers.commands.contextMenus.get(commandName);
 
 		if (!command) {
 			logger.warn(`Unknown context menu command: ${commandName}`);
@@ -119,6 +124,7 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 		interaction: MessageComponentInteraction | ModalSubmitInteraction,
 	): Promise<void> {
 		const { client } = this;
+		const { managers } = client;
 
 		if (!interaction.inCachedGuild()) {
 			return;
@@ -130,7 +136,7 @@ export default class InteractionCreateListener extends Listener<"interactionCrea
 			return;
 		}
 
-		const component = client.componentManager.components.get(preCustomId);
+		const component = managers.components.get(preCustomId);
 
 		if (!component) {
 			logger.warn(`Unknown component: ${preCustomId}`);

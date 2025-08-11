@@ -37,9 +37,9 @@ interface CommandRegistrationCounts {
 }
 
 export default class CommandManager<Ready extends boolean = boolean> {
-	public slashCommands: Collection<string, SlashCommand | HybridCommand> = new Collection();
-	public prefixCommands: Collection<string, PrefixCommand | HybridCommand> = new Collection();
-	public contextMenuCommands: Collection<string, ContextMenuCommand> = new Collection();
+	public slashes: Collection<string, SlashCommand | HybridCommand> = new Collection();
+	public prefixes: Collection<string, PrefixCommand | HybridCommand> = new Collection();
+	public contextMenus: Collection<string, ContextMenuCommand> = new Collection();
 
 	public constructor(public client: ZentBot<Ready>) {}
 
@@ -143,7 +143,7 @@ export default class CommandManager<Ready extends boolean = boolean> {
 	}
 
 	private registerSlashCommand(name: string, instance: SlashCommand | HybridCommand): boolean {
-		return this.registerInCollection(this.slashCommands, name, instance, "slash command");
+		return this.registerInCollection(this.slashes, name, instance, "slash command");
 	}
 
 	private registerPrefixCommand(
@@ -172,16 +172,11 @@ export default class CommandManager<Ready extends boolean = boolean> {
 	}
 
 	private registerPrefixTrigger(trigger: string, instance: PrefixCommand | HybridCommand): boolean {
-		return this.registerInCollection(this.prefixCommands, trigger, instance, "prefix trigger");
+		return this.registerInCollection(this.prefixes, trigger, instance, "prefix trigger");
 	}
 
 	private registerContextMenuCommand(name: string, instance: ContextMenuCommand): boolean {
-		return this.registerInCollection(
-			this.contextMenuCommands,
-			name,
-			instance,
-			"context menu command",
-		);
+		return this.registerInCollection(this.contextMenus, name, instance, "context menu command");
 	}
 
 	private registerInCollection<T extends Command>(

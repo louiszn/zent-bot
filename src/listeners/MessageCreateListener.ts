@@ -1,4 +1,5 @@
 import type { Message } from "discord.js";
+import { Events } from "discord.js";
 import { Listener, useListener } from "../base/listener/Listener.js";
 
 import { HybridCommand, PrefixHybridContext } from "../base/command/Command.js";
@@ -6,10 +7,11 @@ import logger from "../libs/logger.js";
 
 const PREFIX = "_";
 
-@useListener("messageCreate")
-export default class MessageCreateListener extends Listener<"messageCreate"> {
+@useListener(Events.MessageCreate)
+export default class MessageCreateListener extends Listener<Events.MessageCreate> {
 	public async execute(message: Message) {
 		const { client } = this;
+		const { managers } = client;
 
 		if (!message.inGuild() || message.author.bot) {
 			return;
@@ -23,7 +25,7 @@ export default class MessageCreateListener extends Listener<"messageCreate"> {
 
 		const commandName = args[0].toLowerCase();
 
-		const command = client.commandManager.prefixCommands.get(commandName);
+		const command = managers.commands.prefixes.get(commandName);
 
 		if (!command) {
 			return;
