@@ -1,4 +1,4 @@
-import type { Message, MessageSnapshot } from "discord.js";
+import { Events, type Message, type MessageSnapshot } from "discord.js";
 import { Listener, useListener } from "../base/listener/Listener.js";
 import config from "../config.js";
 import prisma from "../libs/prisma.js";
@@ -7,8 +7,8 @@ const WHITELISTED_DOMAINS = ["tenor.com"] as const;
 
 const LINK_REGEX = /https?:\/\/\S+/gi;
 
-@useListener("messageCreate")
-export default class RBDMessageListener extends Listener<"messageCreate"> {
+@useListener(Events.MessageCreate)
+export default class RBDMessageListener extends Listener<Events.MessageCreate> {
 	public override async execute(message: Message): Promise<void> {
 		if (
 			message.guildId !== config.rbd.guildId ||
