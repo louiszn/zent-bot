@@ -2,8 +2,11 @@ import type { Message } from "discord.js";
 import { PrefixCommand, usePrefixCommand } from "../../base/command/Command.js";
 
 import { extractId } from "../../utils/string.js";
-import prisma from "../../libs/prisma.js";
 import { getWebhook } from "../../libs/webhook.js";
+import db from "../../database/index.js";
+import { eq } from "drizzle-orm";
+import { characterMessagesTable } from "../../database/schema/character.js";
+import { getReplyPreview } from "../../libs/character.js";
 
 @usePrefixCommand({
 	triggers: ["edit"],
@@ -50,12 +53,12 @@ export default class DeleteCommand extends PrefixCommand {
 			return;
 		}
 
-		const characterMessage = await prisma.message.findFirst({
-			where: { id: targetMessage.id },
-			include: { character: true },
+		const characterMessage = await db.query.characterMessagesTable.findFirst({
+			where: eq(characterMessagesTable.id, BigInt(targetMessage.id)),
+			with: { character: true },
 		});
 
-		if (!characterMessage || characterMessage.character?.userId !== message.author.id) {
+		if (!characterMessage || characterMessage.character?.userId !== BigInt(message.author.id)) {
 			await message.channel.send("You can't edit this message.");
 			return;
 		}
@@ -71,15 +74,31 @@ export default class DeleteCommand extends PrefixCommand {
 
 		await message.delete();
 
-		const replyPreview = characterMessage.replyPreview;
+		const repliedMessageReview = await (async () => {
+			if (!characterMessage.repliedMessageId) {
+				return null;
+			}
+
+			const repliedMessage = await message.channel.messages
+				.fetch(characterMessage.repliedMessageId.toString())
+				.catch(() => null);
+
+			if (!repliedMessage) {
+				return null;
+			}
+
+			return getReplyPreview(repliedMessage);
+		})();
 
 		await webhook.editMessage(targetMessage, {
-			content: replyPreview ? `${replyPreview}\n${newContent}` : newContent,
+			content: repliedMessageReview ? `${repliedMessageReview}\n${newContent}` : newContent,
 		});
 
-		await prisma.message.update({
-			where: { id: characterMessage.id },
-			data: { content: newContent },
-		});
+		await db
+			.update(characterMessagesTable)
+			.set({
+				content: newContent,
+			})
+			.where(eq(characterMessagesTable.id, characterMessage.id));
 	}
 }

@@ -5,9 +5,12 @@ import {
 	InteractionContextType,
 	MessageFlags,
 } from "discord.js";
+
 import { ContextMenuCommand, useContextMenuCommand } from "../../base/command/Command.js";
-import prisma from "../../libs/prisma.js";
 import { getCharacterInformationEmbed } from "../../libs/character.js";
+import db from "../../database/index.js";
+import { characterMessagesTable } from "../../database/schema/character.js";
+import { eq } from "drizzle-orm";
 
 @useContextMenuCommand({
 	data: new ContextMenuCommandBuilder()
@@ -17,9 +20,11 @@ import { getCharacterInformationEmbed } from "../../libs/character.js";
 })
 export default class GetCharacterInfoCommand extends ContextMenuCommand {
 	public async execute(interaction: MessageContextMenuCommandInteraction<"cached">) {
-		const characterMessage = await prisma.message.findFirst({
-			where: { id: interaction.targetMessage.id },
-			include: { character: true },
+		const { targetMessage } = interaction;
+
+		const characterMessage = await db.query.characterMessagesTable.findFirst({
+			where: eq(characterMessagesTable.id, BigInt(targetMessage.id)),
+			with: { character: true },
 		});
 
 		if (!characterMessage) {

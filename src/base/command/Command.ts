@@ -21,7 +21,7 @@ import type ZentBot from "../ZentBot.js";
 import CommandRegistry from "./CommandRegistry.js";
 
 export abstract class BaseCommand {
-	public constructor(protected client: ZentBot<true>) { }
+	public constructor(protected client: ZentBot<true>) {}
 
 	abstract execute(...args: unknown[]): Promise<void>;
 }

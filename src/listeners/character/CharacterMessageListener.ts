@@ -2,7 +2,7 @@ import type { Message, Webhook } from "discord.js";
 import { Events, PermissionFlagsBits } from "discord.js";
 import { Listener, useListener } from "../../base/listener/Listener.js";
 
-import prisma from "../../libs/prisma.js";
+import db from "../../database/index.js";
 
 import {
 	getReplyPreview,
@@ -11,6 +11,7 @@ import {
 } from "../../libs/character.js";
 import { getWebhook } from "../../libs/webhook.js";
 import logger from "../../libs/logger.js";
+import { characterMessagesTable } from "../../database/schema/character.js";
 
 @useListener(Events.MessageCreate)
 export default class CharacterMessageListener extends Listener<Events.MessageCreate> {
@@ -34,7 +35,7 @@ export default class CharacterMessageListener extends Listener<Events.MessageCre
 			return;
 		}
 
-		const characters = await getUserCharacters(message.author.id);
+		const characters = await getUserCharacters(BigInt(message.author.id));
 
 		if (!characters.size) {
 			return;
@@ -101,14 +102,13 @@ export default class CharacterMessageListener extends Listener<Events.MessageCre
 				})),
 			});
 
-			await prisma.message.create({
-				data: {
-					id: characterMessage.id,
-					content: contentToSend,
-					characterId: character.id,
-					repliedMessageId: message.reference?.messageId,
-					replyPreview,
-				},
+			await db.insert(characterMessagesTable).values({
+				id: BigInt(characterMessage.id),
+				content: contentToSend,
+				characterId: character.id,
+				repliedMessageId: message.reference?.messageId
+					? BigInt(message.reference.messageId)
+					: undefined,
 			});
 		} catch (error) {
 			logger.error("Failed to send webhook message:", error);

@@ -17,9 +17,10 @@ import {
 import type { HybridContext } from "../../base/command/Command.js";
 import { HybridCommand, useHybridCommand } from "../../base/command/Command.js";
 
-import prisma from "../../libs/prisma.js";
+import db from "../../database/index.js";
 import { extractId, sanitize } from "../../utils/string.js";
-import type { Character } from "@prisma/client";
+
+import type { Character } from "../../libs/character.js";
 import {
 	createUserCharacter,
 	getCharacterInformationEmbed,
@@ -31,6 +32,8 @@ import {
 } from "../../libs/character.js";
 import { isImageUrl } from "../../utils/url.js";
 import { Paginator } from "../../libs/Paginator.js";
+import { and, eq } from "drizzle-orm";
+import { charactersTable } from "../../database/schema/character.js";
 
 const getCharacterOption = (option: SlashCommandStringOption) =>
 	option
@@ -148,10 +151,8 @@ export default class CharacterCommand extends HybridCommand {
 		if (focusedOption.name === "character") {
 			const userId = (interaction.options.get("user")?.value as string) || interaction.user.id;
 
-			const characters = await prisma.character.findMany({
-				where: {
-					userId: userId,
-				},
+			const characters = await db.query.charactersTable.findMany({
+				where: eq(charactersTable.userId, BigInt(userId)),
 			});
 
 			if (!characters.length) {
@@ -161,7 +162,7 @@ export default class CharacterCommand extends HybridCommand {
 			const input = focusedOption.value.toLowerCase().trim();
 
 			const filterred = characters.filter(
-				(char) => char.name?.toLowerCase().includes(input) || char.id.toLowerCase().includes(input),
+				(char) => char.name?.toLowerCase().includes(input) || char.id.toString().includes(input),
 			);
 
 			if (!filterred.length) {
@@ -171,7 +172,7 @@ export default class CharacterCommand extends HybridCommand {
 			await interaction.respond(
 				filterred.map((choice) => ({
 					name: choice.name ? `${choice.name} (${choice.tag})` : choice.tag,
-					value: choice.id,
+					value: choice.id.toString(),
 				})),
 			);
 		}
@@ -217,14 +218,11 @@ export default class CharacterCommand extends HybridCommand {
 			return;
 		}
 
-		const existed = await prisma.character.findFirst({
-			where: {
-				tag,
-				userId: context.user.id,
-			},
+		const existed = await db.query.charactersTable.findFirst({
+			where: and(eq(charactersTable.userId, BigInt(context.user.id)), eq(charactersTable.tag, tag)),
 		});
 
-		if (existed !== null) {
+		if (existed) {
 			await context.send({
 				content: `Character with name \`${tag}\` already exists.`,
 				flags: MessageFlags.Ephemeral,
@@ -233,7 +231,7 @@ export default class CharacterCommand extends HybridCommand {
 			return;
 		}
 
-		await createUserCharacter(context.user.id, tag);
+		await createUserCharacter(BigInt(context.user.id), tag);
 
 		await context.send(
 			`Created new character with tag \`${tag}\`. You can also change character tag and name later.`,
@@ -245,10 +243,10 @@ export default class CharacterCommand extends HybridCommand {
 
 		if (context.isInteraction()) {
 			const characterId = context.source.options.getString("character", true);
-			character = await getUserCharacterById(context.user.id, characterId);
+			character = await getUserCharacterById(BigInt(context.user.id), BigInt(characterId));
 		} else {
 			const characterTag = sanitize(args[2] || "").toLowerCase();
-			character = await getUserCharacterByTag(context.user.id, characterTag);
+			character = await getUserCharacterByTag(BigInt(context.user.id), characterTag);
 		}
 
 		if (!character) {
@@ -290,9 +288,7 @@ export default class CharacterCommand extends HybridCommand {
 		collector.on("collect", async (interaction) => {
 			switch (interaction.customId) {
 				case "character:delete:yes":
-					await prisma.character.delete({
-						where: { id: character.id },
-					});
+					await db.delete(charactersTable).where(eq(charactersTable.id, character.id));
 
 					// A better alternative to .edit() and .deferUpdate()
 					await interaction.update({
@@ -331,10 +327,10 @@ export default class CharacterCommand extends HybridCommand {
 
 		if (context.isInteraction()) {
 			const characterId = context.source.options.getString("character", true);
-			character = await getUserCharacterById(context.user.id, characterId);
+			character = await getUserCharacterById(BigInt(context.user.id), BigInt(characterId));
 		} else {
 			const characterTag = sanitize(args[2] || "").toLowerCase();
-			character = await getUserCharacterByTag(context.user.id, characterTag);
+			character = await getUserCharacterByTag(BigInt(context.user.id), characterTag);
 		}
 
 		if (!character) {
@@ -388,7 +384,7 @@ export default class CharacterCommand extends HybridCommand {
 			}
 		}
 
-		const characters = (await getUserCharacters(user.id)).map((char) => char);
+		const characters = (await getUserCharacters(BigInt(user.id))).map((char) => char);
 
 		if (characters.length) {
 			const pages: MessageCreateOptions[] = [];
@@ -434,7 +430,7 @@ export default class CharacterCommand extends HybridCommand {
 		if (context.isInteraction()) {
 			user = context.source.options.getUser("user") || user;
 			const characterId = context.source.options.getString("character", true);
-			character = await getUserCharacterById(user.id, characterId);
+			character = await getUserCharacterById(BigInt(user.id), BigInt(characterId));
 		} else {
 			const arg1 = args[2];
 			const arg2 = args[3];
@@ -465,7 +461,7 @@ export default class CharacterCommand extends HybridCommand {
 				return;
 			}
 
-			character = await getUserCharacterByTag(user.id, characterTag);
+			character = await getUserCharacterByTag(BigInt(user.id), characterTag);
 		}
 
 		if (!character) {
@@ -496,7 +492,7 @@ export default class CharacterCommand extends HybridCommand {
 			}
 		}
 
-		await updateUserCharacterById(context.user.id, character.id, { name });
+		await updateUserCharacterById(BigInt(context.user.id), character.id, { name });
 
 		await context.send(
 			`Successfully changed character name from \`${character.name || character.tag}\` to \`${name}\`.`,
@@ -517,14 +513,14 @@ export default class CharacterCommand extends HybridCommand {
 			}
 		}
 
-		const existed = await getUserCharacterByTag(context.user.id, newTag);
+		const existed = await getUserCharacterByTag(BigInt(context.user.id), newTag);
 
 		if (existed) {
 			await context.send(`${getDisplayNameWithTag(existed)} already owned this tag.`);
 			return;
 		}
 
-		await updateUserCharacterById(context.user.id, character.id, { tag: newTag });
+		await updateUserCharacterById(BigInt(context.user.id), character.id, { tag: newTag });
 
 		await context.send(
 			`Successfully changed character tag from \`${character.tag}\` to \`${newTag}\`.`,
@@ -583,7 +579,9 @@ export default class CharacterCommand extends HybridCommand {
 			return;
 		}
 
-		await updateUserCharacterById(context.user.id, character.id, { avatarURL: newAvatar.url });
+		await updateUserCharacterById(BigInt(context.user.id), character.id, {
+			avatarURL: newAvatar.url,
+		});
 
 		await baseMessage.edit({
 			content: `Successfully updated avatar for ${character.name}!\n*Keep this message and channel safe! Otherwise your character will lose its avatar.*`,
@@ -606,7 +604,7 @@ export default class CharacterCommand extends HybridCommand {
 
 		prefix = prefix.toLowerCase();
 
-		const characters = await getUserCharacters(context.user.id);
+		const characters = await getUserCharacters(BigInt(context.user.id));
 		const existed = characters.find((char) => char.prefix === prefix);
 
 		if (existed) {
@@ -614,7 +612,7 @@ export default class CharacterCommand extends HybridCommand {
 			return;
 		}
 
-		await updateUserCharacterById(context.user.id, character.id, { prefix });
+		await updateUserCharacterById(BigInt(context.user.id), character.id, { prefix });
 
 		await context.send(
 			character.prefix

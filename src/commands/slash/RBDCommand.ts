@@ -8,8 +8,10 @@ import {
 } from "discord.js";
 import { SlashCommand, useSlashCommand } from "../../base/command/Command.js";
 import config from "../../config.js";
-import prisma from "../../libs/prisma.js";
-import type { RbdUserCount } from "@prisma/client";
+import db from "../../database/index.js";
+import type { InferInsertModel } from "drizzle-orm";
+import { desc } from "drizzle-orm";
+import { rbdUserCounts } from "../../database/schema/rbd.js";
 
 @useSlashCommand({
 	data: new SlashCommandBuilder()
@@ -106,8 +108,8 @@ export default class RBDCommand extends SlashCommand {
 			content: "@everyone RBD đã kết thúc! Đang tính kết quả...",
 		});
 
-		const counters = await prisma.rbdUserCount.findMany({
-			orderBy: [{ count: "desc" }, { lastUpdated: "desc" }],
+		const counters = await db.query.rbdUserCounts.findMany({
+			orderBy: [desc(rbdUserCounts.count), desc(rbdUserCounts.lastUpdated)],
 		});
 
 		if (counters.length === 0) {
@@ -131,14 +133,14 @@ export default class RBDCommand extends SlashCommand {
 			return;
 		}
 
-		await prisma.rbdUserCount.deleteMany();
+		await db.delete(rbdUserCounts);
 
 		await interaction.reply("Đã reset dữ liệu thành công");
 	}
 
 	private async onLeaderboard(interaction: ChatInputCommandInteraction<"cached">) {
-		const counters = await prisma.rbdUserCount.findMany({
-			orderBy: [{ count: "desc" }, { lastUpdated: "desc" }],
+		const counters = await db.query.rbdUserCounts.findMany({
+			orderBy: [desc(rbdUserCounts.count), desc(rbdUserCounts.lastUpdated)],
 		});
 
 		if (counters.length === 0) {
@@ -157,7 +159,10 @@ export default class RBDCommand extends SlashCommand {
 		});
 	}
 
-	private getLeaderboardContainer(counters: RbdUserCount[], userId?: string) {
+	private getLeaderboardContainer(
+		counters: InferInsertModel<typeof rbdUserCounts>[],
+		userId?: string,
+	) {
 		const container = new ContainerBuilder().setAccentColor(0xfacc15);
 
 		const medals = ["🥇", "🥈", "🥉"];
@@ -166,8 +171,8 @@ export default class RBDCommand extends SlashCommand {
 			return medals[rank - 1] ?? `${rank}.`;
 		};
 
-		const formatContent = (rank: number, counter: RbdUserCount) => {
-			return `${formatRank(rank)} <@${counter.userId}> - ${counter.count.toLocaleString("vi")} tin nhắn${counter.userId === userId ? " <<<" : ""}`;
+		const formatContent = (rank: number, counter: InferInsertModel<typeof rbdUserCounts>) => {
+			return `${formatRank(rank)} <@${counter.userId}> - ${counter.count.toLocaleString("vi")} tin nhắn${userId && counter.userId === BigInt(userId) ? " <<<" : ""}`;
 		};
 
 		const topRanks: string[] = [];
@@ -177,9 +182,9 @@ export default class RBDCommand extends SlashCommand {
 			const content = formatContent(i + 1, counter);
 
 			if (i < 3) {
-				topRanks.push(userId === counter.userId ? bold(content) : content);
+				topRanks.push(userId && BigInt(userId) === counter.userId ? bold(content) : content);
 			} else {
-				ranks.push(userId === counter.userId ? bold(content) : content);
+				ranks.push(userId && BigInt(userId) === counter.userId ? bold(content) : content);
 			}
 		}
 

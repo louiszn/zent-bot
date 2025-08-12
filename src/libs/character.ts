@@ -1,28 +1,33 @@
 import type { Message } from "discord.js";
 import { Collection, EmbedBuilder } from "discord.js";
-import prisma from "./prisma.js";
-import type { Character } from "@prisma/client";
+
+import { and, eq, type InferInsertModel } from "drizzle-orm";
+import { characterMessagesTable, charactersTable } from "../database/schema/character.js";
+import db from "../database/index.js";
+import snowflake from "./snowflake.js";
+
+export type Character = InferInsertModel<typeof charactersTable>;
 
 // Because of limit of characters a webhook can send, we will use 100 characters for the replied message preview
-export const MAX_MESSAGE_CONTENT_LENGTH = 1_900 as const;
+export const MAX_MESSAGE_CONTENT_LENGTH = 1_800 as const;
 
-type CharacterCollection = Collection<string, Character>;
+type CharacterCollection = Collection<bigint, Character>;
 
-const userCharacters: Collection<string, CharacterCollection> = new Collection();
+const userCharactersCache: Collection<bigint, CharacterCollection> = new Collection();
 
 export async function getUserCharacters(
-	userId: string,
+	userId: bigint,
 	force = false,
 ): Promise<CharacterCollection> {
 	let characters: CharacterCollection | undefined;
 
 	if (!force) {
-		characters = userCharacters.get(userId);
+		characters = userCharactersCache.get(userId);
 	}
 
 	if (!characters) {
-		const dbCharacters = await prisma.character.findMany({
-			where: { userId },
+		const dbCharacters = await db.query.charactersTable.findMany({
+			where: eq(charactersTable.userId, BigInt(userId)),
 		});
 
 		characters = new Collection();
@@ -32,15 +37,15 @@ export async function getUserCharacters(
 		}
 
 		// Cache even empty result to avoid re-querying
-		userCharacters.set(userId, characters);
+		userCharactersCache.set(userId, characters);
 	}
 
 	return characters;
 }
 
 export async function getUserCharacterById(
-	userId: string,
-	characterId: string,
+	userId: bigint,
+	characterId: bigint,
 	force = false,
 ): Promise<Character | null> {
 	const characters = await getUserCharacters(userId, force);
@@ -48,7 +53,7 @@ export async function getUserCharacterById(
 }
 
 export async function getUserCharacterByTag(
-	userId: string,
+	userId: bigint,
 	characterTag: string,
 	force = false,
 ): Promise<Character | null> {
@@ -57,17 +62,19 @@ export async function getUserCharacterByTag(
 }
 
 export async function createUserCharacter(
-	userId: string,
+	userId: bigint,
 	characterTag: string,
 ): Promise<Character> {
 	const characters = await getUserCharacters(userId);
 
-	const character = await prisma.character.create({
-		data: {
+	const [character] = await db
+		.insert(charactersTable)
+		.values({
+			id: snowflake.generate(),
 			tag: characterTag,
 			userId,
-		},
-	});
+		})
+		.returning();
 
 	characters.set(character.id, character);
 
@@ -75,19 +82,17 @@ export async function createUserCharacter(
 }
 
 export async function updateUserCharacterById(
-	userId: string,
-	characterId: string,
+	userId: bigint,
+	characterId: bigint,
 	data: Partial<Character>,
 ): Promise<Character> {
 	const characters = await getUserCharacters(userId);
 
-	const character = await prisma.character.update({
-		where: {
-			id: characterId,
-			userId,
-		},
-		data,
-	});
+	const [character] = await db
+		.update(charactersTable)
+		.set(data)
+		.where(and(eq(charactersTable.id, characterId), eq(charactersTable.userId, userId)))
+		.returning();
 
 	characters.set(characterId, character);
 
@@ -99,15 +104,18 @@ export function getDisplayNameWithTag(character: Character) {
 }
 
 export function getCharacterInformationEmbed(character: Character) {
+	const decoded = snowflake.decode(character.id);
+	const createdTimestamp = Number(decoded.timestamp);
+
 	return new EmbedBuilder()
 		.setTitle(character.name || character.tag)
 		.setColor("Yellow")
-		.setThumbnail(character.avatarURL)
+		.setThumbnail(character.avatarURL || null)
 		.setDescription(
 			`> **Tag:** \`${character.tag}\`
 > **Prefix:** \`${character.prefix}\`
 > **Owner:** <@${character.userId}>
-> **Created at:** <t:${Math.floor(character.createdAt.getTime() / 1000)}:R>`,
+> **Created at:** <t:${Math.floor(createdTimestamp / 1000)}:R>`,
 		)
 		.setTimestamp();
 }
@@ -119,9 +127,9 @@ export async function getReplyPreview(message: Message) {
 	if (message.webhookId) {
 		author = message.author.displayName;
 
-		const characterMessage = await prisma.message.findFirst({
-			where: { id: message.id },
-			include: {
+		const characterMessage = await db.query.characterMessagesTable.findFirst({
+			where: eq(characterMessagesTable.id, BigInt(message.id)),
+			with: {
 				character: true,
 			},
 		});
