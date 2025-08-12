@@ -1,7 +1,9 @@
 import { Events, type Message, type MessageSnapshot } from "discord.js";
 import { Listener, useListener } from "../base/listener/Listener.js";
 import config from "../config.js";
-import prisma from "../libs/prisma.js";
+import db from "../database/index.js";
+import { rbdUserCounts } from "../database/schema/rbd.js";
+import { sql } from "drizzle-orm";
 
 const WHITELISTED_DOMAINS = ["tenor.com"] as const;
 
@@ -27,16 +29,18 @@ export default class RBDMessageListener extends Listener<Events.MessageCreate> {
 			return;
 		}
 
-		await prisma.rbdUserCount.upsert({
-			where: { userId: message.author.id },
-			update: {
-				count: { increment: 1 },
-			},
-			create: {
+		await db
+			.insert(rbdUserCounts)
+			.values({
 				userId: message.author.id,
 				count: 1,
-			},
-		});
+			})
+			.onConflictDoUpdate({
+				target: rbdUserCounts.userId,
+				set: {
+					count: sql`${rbdUserCounts.count} + 1`,
+				},
+			});
 	}
 
 	private isMessageSpoilered(message: Message | MessageSnapshot) {

@@ -17,9 +17,10 @@ import {
 import type { HybridContext } from "../../base/command/Command.js";
 import { HybridCommand, useHybridCommand } from "../../base/command/Command.js";
 
-import prisma from "../../libs/prisma.js";
+import db from "../../database/index.js";
 import { extractId, sanitize } from "../../utils/string.js";
-import type { Character } from "@prisma/client";
+
+import type { Character } from "../../libs/character.js";
 import {
 	createUserCharacter,
 	getCharacterInformationEmbed,
@@ -31,6 +32,8 @@ import {
 } from "../../libs/character.js";
 import { isImageUrl } from "../../utils/url.js";
 import { Paginator } from "../../libs/Paginator.js";
+import { and, eq } from "drizzle-orm";
+import { charactersTable } from "../../database/schema/character.js";
 
 const getCharacterOption = (option: SlashCommandStringOption) =>
 	option
@@ -148,10 +151,8 @@ export default class CharacterCommand extends HybridCommand {
 		if (focusedOption.name === "character") {
 			const userId = (interaction.options.get("user")?.value as string) || interaction.user.id;
 
-			const characters = await prisma.character.findMany({
-				where: {
-					userId: userId,
-				},
+			const characters = await db.query.charactersTable.findMany({
+				where: eq(charactersTable.userId, userId),
 			});
 
 			if (!characters.length) {
@@ -161,7 +162,7 @@ export default class CharacterCommand extends HybridCommand {
 			const input = focusedOption.value.toLowerCase().trim();
 
 			const filterred = characters.filter(
-				(char) => char.name?.toLowerCase().includes(input) || char.id.toLowerCase().includes(input),
+				(char) => char.name?.toLowerCase().includes(input) || char.id.toString().includes(input),
 			);
 
 			if (!filterred.length) {
@@ -171,7 +172,7 @@ export default class CharacterCommand extends HybridCommand {
 			await interaction.respond(
 				filterred.map((choice) => ({
 					name: choice.name ? `${choice.name} (${choice.tag})` : choice.tag,
-					value: choice.id,
+					value: choice.id.toString(),
 				})),
 			);
 		}
@@ -217,14 +218,11 @@ export default class CharacterCommand extends HybridCommand {
 			return;
 		}
 
-		const existed = await prisma.character.findFirst({
-			where: {
-				tag,
-				userId: context.user.id,
-			},
+		const existed = await db.query.charactersTable.findFirst({
+			where: and(eq(charactersTable.userId, context.user.id), eq(charactersTable.tag, tag)),
 		});
 
-		if (existed !== null) {
+		if (existed) {
 			await context.send({
 				content: `Character with name \`${tag}\` already exists.`,
 				flags: MessageFlags.Ephemeral,
@@ -290,9 +288,7 @@ export default class CharacterCommand extends HybridCommand {
 		collector.on("collect", async (interaction) => {
 			switch (interaction.customId) {
 				case "character:delete:yes":
-					await prisma.character.delete({
-						where: { id: character.id },
-					});
+					await db.delete(charactersTable).where(eq(charactersTable.id, character.id));
 
 					// A better alternative to .edit() and .deferUpdate()
 					await interaction.update({
@@ -583,7 +579,9 @@ export default class CharacterCommand extends HybridCommand {
 			return;
 		}
 
-		await updateUserCharacterById(context.user.id, character.id, { avatarURL: newAvatar.url });
+		await updateUserCharacterById(context.user.id, character.id, {
+			avatarURL: newAvatar.url,
+		});
 
 		await baseMessage.edit({
 			content: `Successfully updated avatar for ${character.name}!\n*Keep this message and channel safe! Otherwise your character will lose its avatar.*`,

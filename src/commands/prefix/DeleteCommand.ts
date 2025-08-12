@@ -2,7 +2,9 @@ import type { Message } from "discord.js";
 import { PrefixCommand, usePrefixCommand } from "../../base/command/Command.js";
 
 import { extractId } from "../../utils/string.js";
-import prisma from "../../libs/prisma.js";
+import db from "../../database/index.js";
+import { eq } from "drizzle-orm";
+import { characterMessagesTable } from "../../database/schema/character.js";
 
 @usePrefixCommand({
 	triggers: ["delete", "del"],
@@ -39,9 +41,11 @@ export default class DeleteCommand extends PrefixCommand {
 			}
 		}
 
-		const characterMessage = await prisma.message.findFirst({
-			where: { id: targetMessage.id },
-			include: { character: true },
+		const characterMessage = await db.query.characterMessagesTable.findFirst({
+			where: eq(characterMessagesTable.id, targetMessage.id),
+			with: {
+				character: true,
+			},
 		});
 
 		if (!characterMessage || characterMessage.character?.userId !== message.author.id) {
@@ -53,8 +57,8 @@ export default class DeleteCommand extends PrefixCommand {
 
 		await targetMessage.delete();
 
-		await prisma.message.delete({
-			where: { id: characterMessage.id },
-		});
+		await db
+			.delete(characterMessagesTable)
+			.where(eq(characterMessagesTable.id, characterMessage.id));
 	}
 }

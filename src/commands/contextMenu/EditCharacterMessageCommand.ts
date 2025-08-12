@@ -9,9 +9,14 @@ import {
 	TextInputBuilder,
 	TextInputStyle,
 } from "discord.js";
+
 import { ContextMenuCommand, useContextMenuCommand } from "../../base/command/Command.js";
-import prisma from "../../libs/prisma.js";
+
 import { MAX_MESSAGE_CONTENT_LENGTH } from "../../libs/character.js";
+import { eq } from "drizzle-orm";
+
+import db from "../../database/index.js";
+import { characterMessagesTable } from "../../database/schema/character.js";
 
 @useContextMenuCommand({
 	data: new ContextMenuCommandBuilder()
@@ -23,9 +28,11 @@ export default class EditCharacterMessageCommand extends ContextMenuCommand {
 	public async execute(interaction: MessageContextMenuCommandInteraction<"cached">) {
 		const { targetMessage } = interaction;
 
-		const characterMessage = await prisma.message.findFirst({
-			where: { id: targetMessage.id },
-			include: { character: true },
+		const characterMessage = await db.query.characterMessagesTable.findFirst({
+			where: eq(characterMessagesTable.id, targetMessage.id),
+			with: {
+				character: true,
+			},
 		});
 
 		if (!characterMessage || characterMessage.character?.userId !== interaction.user.id) {
