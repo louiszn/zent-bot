@@ -11,12 +11,12 @@ export type Character = InferInsertModel<typeof charactersTable>;
 // Because of limit of characters a webhook can send, we will use 100 characters for the replied message preview
 export const MAX_MESSAGE_CONTENT_LENGTH = 1_800 as const;
 
-type CharacterCollection = Collection<bigint, Character>;
+type CharacterCollection = Collection<string, Character>;
 
-const userCharactersCache: Collection<bigint, CharacterCollection> = new Collection();
+const userCharactersCache: Collection<string, CharacterCollection> = new Collection();
 
 export async function getUserCharacters(
-	userId: bigint,
+	userId: string,
 	force = false,
 ): Promise<CharacterCollection> {
 	let characters: CharacterCollection | undefined;
@@ -27,7 +27,7 @@ export async function getUserCharacters(
 
 	if (!characters) {
 		const dbCharacters = await db.query.charactersTable.findMany({
-			where: eq(charactersTable.userId, BigInt(userId)),
+			where: eq(charactersTable.userId, userId),
 		});
 
 		characters = new Collection();
@@ -44,8 +44,8 @@ export async function getUserCharacters(
 }
 
 export async function getUserCharacterById(
-	userId: bigint,
-	characterId: bigint,
+	userId: string,
+	characterId: string,
 	force = false,
 ): Promise<Character | null> {
 	const characters = await getUserCharacters(userId, force);
@@ -53,7 +53,7 @@ export async function getUserCharacterById(
 }
 
 export async function getUserCharacterByTag(
-	userId: bigint,
+	userId: string,
 	characterTag: string,
 	force = false,
 ): Promise<Character | null> {
@@ -62,7 +62,7 @@ export async function getUserCharacterByTag(
 }
 
 export async function createUserCharacter(
-	userId: bigint,
+	userId: string,
 	characterTag: string,
 ): Promise<Character> {
 	const characters = await getUserCharacters(userId);
@@ -70,7 +70,7 @@ export async function createUserCharacter(
 	const [character] = await db
 		.insert(charactersTable)
 		.values({
-			id: snowflake.generate(),
+			id: snowflake.generate().toString(),
 			tag: characterTag,
 			userId,
 		})
@@ -82,8 +82,8 @@ export async function createUserCharacter(
 }
 
 export async function updateUserCharacterById(
-	userId: bigint,
-	characterId: bigint,
+	userId: string,
+	characterId: string,
 	data: Partial<Character>,
 ): Promise<Character> {
 	const characters = await getUserCharacters(userId);
@@ -128,7 +128,7 @@ export async function getReplyPreview(message: Message) {
 		author = message.author.displayName;
 
 		const characterMessage = await db.query.characterMessagesTable.findFirst({
-			where: eq(characterMessagesTable.id, BigInt(message.id)),
+			where: eq(characterMessagesTable.id, message.id),
 			with: {
 				character: true,
 			},

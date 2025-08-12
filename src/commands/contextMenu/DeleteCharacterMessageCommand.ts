@@ -35,7 +35,7 @@ export default class DeleteCharMessageCommand extends ContextMenuCommand {
 		}
 
 		const characterMessage = await db.query.characterMessagesTable.findFirst({
-			where: eq(characterMessagesTable.id, BigInt(targetMessage.id)),
+			where: eq(characterMessagesTable.id, targetMessage.id),
 			with: {
 				character: true,
 			},
@@ -49,10 +49,7 @@ export default class DeleteCharMessageCommand extends ContextMenuCommand {
 			return;
 		}
 
-		if (
-			!characterMessage.character ||
-			characterMessage.character.userId !== BigInt(interaction.user.id)
-		) {
+		if (!characterMessage.character || characterMessage.character.userId !== interaction.user.id) {
 			await interaction.followUp({
 				content: "You don't have permissions to delete this message.",
 			});
@@ -67,7 +64,7 @@ export default class DeleteCharMessageCommand extends ContextMenuCommand {
 
 			await db
 				.delete(characterMessagesTable)
-				.where(eq(characterMessagesTable.id, BigInt(targetMessage.id)));
+				.where(eq(characterMessagesTable.id, targetMessage.id));
 		} catch (error) {
 			logger.error(`Failed to delete message ${characterMessage.id} from database:`, error);
 

@@ -29,13 +29,13 @@ export default class EditCharacterMessageCommand extends ContextMenuCommand {
 		const { targetMessage } = interaction;
 
 		const characterMessage = await db.query.characterMessagesTable.findFirst({
-			where: eq(characterMessagesTable.id, BigInt(targetMessage.id)),
+			where: eq(characterMessagesTable.id, targetMessage.id),
 			with: {
 				character: true,
 			},
 		});
 
-		if (!characterMessage || characterMessage.character?.userId !== BigInt(interaction.user.id)) {
+		if (!characterMessage || characterMessage.character?.userId !== interaction.user.id) {
 			await interaction.reply({
 				content: "You can't edit this message.",
 				flags: MessageFlags.Ephemeral,

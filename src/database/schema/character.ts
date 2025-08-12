@@ -1,9 +1,9 @@
 import { relations } from "drizzle-orm";
-import { bigint, pgTable, varchar } from "drizzle-orm/pg-core";
+import { pgTable, varchar } from "drizzle-orm/pg-core";
 import { MAX_MESSAGE_CONTENT_LENGTH } from "../../libs/character.js";
 
 export const charactersTable = pgTable("characters", {
-	id: bigint("id", { mode: "bigint" }).notNull().primaryKey(),
+	id: varchar("id", { length: 20 }).notNull().primaryKey(),
 
 	name: varchar("name", { length: 500 }),
 
@@ -11,19 +11,19 @@ export const charactersTable = pgTable("characters", {
 
 	prefix: varchar("prefix", { length: 50 }),
 
-	userId: bigint("user_id", { mode: "bigint" }).notNull(),
+	userId: varchar("user_id", { length: 20 }).notNull(),
 
 	avatarURL: varchar("avatarURL", { length: 2048 }),
 });
 
 export const characterMessagesTable = pgTable("character_messages", {
-	id: bigint("id", { mode: "bigint" }).notNull().primaryKey(),
+	id: varchar("id", { length: 20 }).notNull().primaryKey(),
 
 	content: varchar("content", { length: MAX_MESSAGE_CONTENT_LENGTH }).notNull(),
 
-	repliedMessageId: bigint("replied_message_id", { mode: "bigint" }),
+	repliedMessageId: varchar("replied_message_id", { length: 20 }),
 
-	characterId: bigint("character_id", { mode: "bigint" }).references(() => charactersTable.id),
+	characterId: varchar("character_id", { length: 20 }).references(() => charactersTable.id),
 });
 
 export const characterMessagesRelations = relations(characterMessagesTable, ({ one }) => ({

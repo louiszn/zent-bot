@@ -23,7 +23,7 @@ export default class GetCharacterInfoCommand extends ContextMenuCommand {
 		const { targetMessage } = interaction;
 
 		const characterMessage = await db.query.characterMessagesTable.findFirst({
-			where: eq(characterMessagesTable.id, BigInt(targetMessage.id)),
+			where: eq(characterMessagesTable.id, targetMessage.id),
 			with: { character: true },
 		});
 

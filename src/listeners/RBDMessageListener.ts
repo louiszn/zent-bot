@@ -32,7 +32,7 @@ export default class RBDMessageListener extends Listener<Events.MessageCreate> {
 		await db
 			.insert(rbdUserCounts)
 			.values({
-				userId: BigInt(message.author.id),
+				userId: message.author.id,
 				count: 1,
 			})
 			.onConflictDoUpdate({

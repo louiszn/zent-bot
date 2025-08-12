@@ -42,13 +42,13 @@ export default class DeleteCommand extends PrefixCommand {
 		}
 
 		const characterMessage = await db.query.characterMessagesTable.findFirst({
-			where: eq(characterMessagesTable.id, BigInt(targetMessage.id)),
+			where: eq(characterMessagesTable.id, targetMessage.id),
 			with: {
 				character: true,
 			},
 		});
 
-		if (!characterMessage || characterMessage.character?.userId !== BigInt(message.author.id)) {
+		if (!characterMessage || characterMessage.character?.userId !== message.author.id) {
 			await message.channel.send("You can't delete this message.");
 			return;
 		}

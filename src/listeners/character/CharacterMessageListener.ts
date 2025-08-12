@@ -35,7 +35,7 @@ export default class CharacterMessageListener extends Listener<Events.MessageCre
 			return;
 		}
 
-		const characters = await getUserCharacters(BigInt(message.author.id));
+		const characters = await getUserCharacters(message.author.id);
 
 		if (!characters.size) {
 			return;
@@ -103,12 +103,10 @@ export default class CharacterMessageListener extends Listener<Events.MessageCre
 			});
 
 			await db.insert(characterMessagesTable).values({
-				id: BigInt(characterMessage.id),
+				id: characterMessage.id,
 				content: contentToSend,
 				characterId: character.id,
-				repliedMessageId: message.reference?.messageId
-					? BigInt(message.reference.messageId)
-					: undefined,
+				repliedMessageId: message.reference?.messageId,
 			});
 		} catch (error) {
 			logger.error("Failed to send webhook message:", error);

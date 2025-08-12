@@ -172,7 +172,7 @@ export default class RBDCommand extends SlashCommand {
 		};
 
 		const formatContent = (rank: number, counter: InferInsertModel<typeof rbdUserCounts>) => {
-			return `${formatRank(rank)} <@${counter.userId}> - ${counter.count.toLocaleString("vi")} tin nhắn${userId && counter.userId === BigInt(userId) ? " <<<" : ""}`;
+			return `${formatRank(rank)} <@${counter.userId}> - ${counter.count.toLocaleString("vi")} tin nhắn${counter.userId === userId ? " <<<" : ""}`;
 		};
 
 		const topRanks: string[] = [];
@@ -182,9 +182,9 @@ export default class RBDCommand extends SlashCommand {
 			const content = formatContent(i + 1, counter);
 
 			if (i < 3) {
-				topRanks.push(userId && BigInt(userId) === counter.userId ? bold(content) : content);
+				topRanks.push(userId === counter.userId ? bold(content) : content);
 			} else {
-				ranks.push(userId && BigInt(userId) === counter.userId ? bold(content) : content);
+				ranks.push(userId === counter.userId ? bold(content) : content);
 			}
 		}
 
