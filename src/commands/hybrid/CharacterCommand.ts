@@ -1,7 +1,10 @@
 import type {
+	APIEmbedField,
 	AutocompleteInteraction,
+	ChatInputCommandInteraction,
 	MessageCreateOptions,
 	SlashCommandStringOption,
+	User,
 } from "discord.js";
 import {
 	ActionRowBuilder,
@@ -17,23 +20,13 @@ import {
 import type { HybridContext } from "../../base/command/Command.js";
 import { HybridCommand, useHybridCommand } from "../../base/command/Command.js";
 
-import db from "../../database/index.js";
 import { extractId, sanitize } from "../../utils/string.js";
 
-import type { Character } from "../../libs/character.js";
-import {
-	createUserCharacter,
-	getCharacterInformationEmbed,
-	getDisplayNameWithTag,
-	getUserCharacterById,
-	getUserCharacterByTag,
-	getUserCharacters,
-	updateUserCharacterById,
-} from "../../libs/character.js";
 import { isImageUrl } from "../../utils/url.js";
 import { Paginator } from "../../libs/Paginator.js";
-import { and, eq } from "drizzle-orm";
-import { charactersTable } from "../../database/schema/character.js";
+import CharacterManager from "../../libs/CharacterManager.js";
+
+import type { Character } from "../../libs/CharacterManager.js";
 
 const getCharacterOption = (option: SlashCommandStringOption) =>
 	option
@@ -148,34 +141,36 @@ export default class CharacterCommand extends HybridCommand {
 	public override async autocomplete(interaction: AutocompleteInteraction) {
 		const focusedOption = interaction.options.getFocused(true);
 
-		if (focusedOption.name === "character") {
-			const userId = (interaction.options.get("user")?.value as string) || interaction.user.id;
-
-			const characters = await db.query.charactersTable.findMany({
-				where: eq(charactersTable.userId, userId),
-			});
-
-			if (!characters.length) {
-				return;
-			}
-
-			const input = focusedOption.value.toLowerCase().trim();
-
-			const filterred = characters.filter(
-				(char) => char.name?.toLowerCase().includes(input) || char.id.toString().includes(input),
-			);
-
-			if (!filterred.length) {
-				return;
-			}
-
-			await interaction.respond(
-				filterred.map((choice) => ({
-					name: choice.name ? `${choice.name} (${choice.tag})` : choice.tag,
-					value: choice.id.toString(),
-				})),
-			);
+		if (focusedOption.name !== "character") {
+			return;
 		}
+
+		const userId = (interaction.options.get("user")?.value as string) || interaction.user.id;
+
+		const characterManager = CharacterManager.create(userId);
+
+		const characters = await characterManager.getAll();
+
+		if (!characters.size) {
+			return;
+		}
+
+		const input = focusedOption.value.toLowerCase().trim();
+
+		const filterred = characters
+			.toJSON()
+			.filter((char) => (char.name || char.tag).toLowerCase().includes(input));
+
+		if (!filterred.length) {
+			return;
+		}
+
+		await interaction.respond(
+			filterred.map((choice) => ({
+				name: choice.name ? `${choice.name} (${choice.tag})` : choice.tag,
+				value: choice.id.toString(),
+			})),
+		);
 	}
 
 	public async execute(context: HybridContext, args: string[]) {
@@ -218,9 +213,9 @@ export default class CharacterCommand extends HybridCommand {
 			return;
 		}
 
-		const existed = await db.query.charactersTable.findFirst({
-			where: and(eq(charactersTable.userId, context.user.id), eq(charactersTable.tag, tag)),
-		});
+		const characterManager = CharacterManager.create(context.user.id);
+
+		const existed = await characterManager.getByTag(tag);
 
 		if (existed) {
 			await context.send({
@@ -231,22 +226,33 @@ export default class CharacterCommand extends HybridCommand {
 			return;
 		}
 
-		await createUserCharacter(context.user.id, tag);
+		await characterManager.create({ tag });
 
 		await context.send(
 			`Created new character with tag \`${tag}\`. You can also change character tag and name later.`,
 		);
 	}
 
-	private async onDelete(context: HybridContext, args: string[]) {
-		let character: Character | null;
+	private async getCharacter(
+		context: HybridContext,
+		userId: string,
+		target: {
+			onInteraction: (interaction: ChatInputCommandInteraction<"cached">) => string;
+			onMessage: () => string | undefined;
+		},
+	): Promise<Character | null> {
+		const characterManager = CharacterManager.create(userId);
+
+		let character: Character | null = null;
 
 		if (context.isInteraction()) {
-			const characterId = context.source.options.getString("character", true);
-			character = await getUserCharacterById(context.user.id, characterId);
+			character = await characterManager.getById(target.onInteraction(context.source));
 		} else {
-			const characterTag = sanitize(args[2] || "").toLowerCase();
-			character = await getUserCharacterByTag(context.user.id, characterTag);
+			const tag = sanitize(target.onMessage() || "");
+
+			if (tag) {
+				character = await characterManager.getByTag(tag);
+			}
 		}
 
 		if (!character) {
@@ -255,10 +261,52 @@ export default class CharacterCommand extends HybridCommand {
 				flags: MessageFlags.Ephemeral,
 			});
 
+			return null;
+		}
+
+		return character;
+	}
+
+	private async getUser(
+		context: HybridContext,
+		target: {
+			onInteraction: (interaction: ChatInputCommandInteraction<"cached">) => User | null;
+			onMessage: () => string | undefined;
+		},
+	) {
+		let user: User | null = context.user;
+
+		if (context.isInteraction()) {
+			user = target.onInteraction(context.source) || user;
+		} else {
+			const userId = extractId(target.onMessage() || "");
+
+			if (userId) {
+				user = await this.client.users.fetch(userId).catch(() => null);
+			}
+		}
+
+		if (!user) {
+			await context.send("Couldn't find that user");
+			return null;
+		}
+
+		return user;
+	}
+
+	private async onDelete(context: HybridContext, args: string[]) {
+		const characterManager = CharacterManager.create(context.user.id);
+
+		const character = await this.getCharacter(context, context.user.id, {
+			onInteraction: (interaction) => interaction.options.getString("character", true),
+			onMessage: () => args[2],
+		});
+
+		if (!character) {
 			return;
 		}
 
-		const displayName = getDisplayNameWithTag(character);
+		const displayName = CharacterManager.getDisplayName(character);
 
 		const message = await context.send({
 			content: `Are you sure you want to delete character ${displayName}?`,
@@ -276,7 +324,7 @@ export default class CharacterCommand extends HybridCommand {
 						.setEmoji("❌"),
 				),
 			],
-			embeds: [getCharacterInformationEmbed(character)],
+			embeds: [CharacterManager.getInformationEmbed(character)],
 		});
 
 		const collector = message.createMessageComponentCollector({
@@ -288,7 +336,7 @@ export default class CharacterCommand extends HybridCommand {
 		collector.on("collect", async (interaction) => {
 			switch (interaction.customId) {
 				case "character:delete:yes":
-					await db.delete(charactersTable).where(eq(charactersTable.id, character.id));
+					characterManager.delete(character.id);
 
 					// A better alternative to .edit() and .deferUpdate()
 					await interaction.update({
@@ -323,22 +371,12 @@ export default class CharacterCommand extends HybridCommand {
 	}
 
 	private async onEdit(context: HybridContext, args: string[]) {
-		let character: Character | null;
-
-		if (context.isInteraction()) {
-			const characterId = context.source.options.getString("character", true);
-			character = await getUserCharacterById(context.user.id, characterId);
-		} else {
-			const characterTag = sanitize(args[2] || "").toLowerCase();
-			character = await getUserCharacterByTag(context.user.id, characterTag);
-		}
+		const character = await this.getCharacter(context, context.user.id, {
+			onInteraction: (interaction) => interaction.options.getString("character", true),
+			onMessage: () => args[2],
+		});
 
 		if (!character) {
-			await context.send({
-				content: "Couldn't find any character.",
-				flags: MessageFlags.Ephemeral,
-			});
-
 			return;
 		}
 
@@ -358,123 +396,88 @@ export default class CharacterCommand extends HybridCommand {
 				await this.onAvatarEdit(context, args, character);
 				break;
 			default:
-				await context.send(`- \`_char edit [tag] name [...name]\`: Update character name
-- \`_char edit [tag] tag [new tag]\`: Update character tag
-- \`_char edit [tag] prefix [prefix]\`: Update character prefix
-- \`_char edit [tag] tag [avatar]\`: Update character avatar`);
 				break;
 		}
 	}
 
 	private async onList(context: HybridContext, args: string[]) {
-		let user = context.user;
+		const user = await this.getUser(context, {
+			onInteraction: (interaction) => interaction.options.getUser("user"),
+			onMessage: () => args[2],
+		});
 
-		if (context.isInteraction()) {
-			user = context.source.options.getUser("user") || user;
-		} else if (args.filter((x) => x)[2]) {
-			const userId = extractId(args[2]);
-
-			if (userId) {
-				try {
-					user = await this.client.users.fetch(userId);
-				} catch {
-					await context.send("Couldn't find that user");
-					return;
-				}
-			}
+		if (!user) {
+			return;
 		}
 
-		const characters = (await getUserCharacters(user.id)).map((char) => char);
+		const characterManager = CharacterManager.create(user.id);
 
-		if (characters.length) {
-			const pages: MessageCreateOptions[] = [];
+		const characters = (await characterManager.getAll()).toJSON();
 
-			const limitPerPage = 5;
-
-			for (let i = 0; i < characters.length; i += limitPerPage) {
-				const currentChars = characters.slice(i, i + limitPerPage);
-
-				const embed = new EmbedBuilder()
-					.setAuthor({ name: user.displayName, iconURL: user.displayAvatarURL() })
-					.setColor("Yellow")
-					.setFields(
-						currentChars.map((char) => {
-							return {
-								name: char.name || char.tag,
-								value: `> **Prefix:** ${char.prefix ? `\`${char.prefix}\`` : "None"}
-> **Tag:** ${char.tag}`,
-							};
-						}),
-					);
-
-				pages.push({ embeds: [embed] });
-			}
-
-			const paginator = new Paginator(context, {
-				pages,
-				timeout: 60_000,
-			});
-
-			await paginator.start();
-		} else {
+		if (!characters.length) {
 			await context.send(
 				`${user.id === context.user.id ? "You don't" : "This user doesn't"} have any characters.`,
 			);
-		}
-	}
-
-	private async onInfo(context: HybridContext, args: string[]) {
-		let user = context.user;
-		let character: Character | null;
-
-		if (context.isInteraction()) {
-			user = context.source.options.getUser("user") || user;
-			const characterId = context.source.options.getString("character", true);
-			character = await getUserCharacterById(user.id, characterId);
-		} else {
-			const arg1 = args[2];
-			const arg2 = args[3];
-
-			let characterTag: string | undefined;
-
-			if (arg1 && arg2) {
-				const userId = extractId(arg1);
-
-				if (userId) {
-					// [user] [tag]
-					try {
-						user = await this.client.users.fetch(userId);
-						characterTag = sanitize(arg2).toLowerCase();
-					} catch {
-						await context.send("Couldn't find that user.");
-						return;
-					}
-				} else {
-					characterTag = sanitize(arg1).toLowerCase(); // fallback to [tag]
-				}
-			} else if (arg1) {
-				characterTag = sanitize(arg1).toLowerCase();
-			}
-
-			if (!characterTag) {
-				await context.send("You must provide a character tag.");
-				return;
-			}
-
-			character = await getUserCharacterByTag(user.id, characterTag);
-		}
-
-		if (!character) {
-			await context.send({
-				content: "Couldn't find any character.",
-				flags: MessageFlags.Ephemeral,
-			});
 
 			return;
 		}
 
+		const pages: MessageCreateOptions[] = [];
+
+		const limitPerPage = 5;
+
+		for (let i = 0; i < characters.length; i += limitPerPage) {
+			const currentChars = characters.slice(i, i + limitPerPage);
+
+			const fields = currentChars.map((char) => {
+				const value = [
+					`> **Prefix:** ${char.prefix ? `\`${char.prefix}\`` : "None"}`,
+					`> **Tag:** ${char.tag}`,
+				].join("\n");
+
+				return {
+					name: char.name || char.tag,
+					value,
+				} satisfies APIEmbedField;
+			});
+
+			const embed = new EmbedBuilder()
+				.setAuthor({ name: user.displayName, iconURL: user.displayAvatarURL() })
+				.setColor("Yellow")
+				.setFields(fields);
+
+			pages.push({ embeds: [embed] });
+		}
+
+		const paginator = new Paginator(context, {
+			pages,
+			timeout: 60_000,
+		});
+
+		await paginator.start();
+	}
+
+	private async onInfo(context: HybridContext, args: string[]) {
+		const user = await this.getUser(context, {
+			onInteraction: (interaction) => interaction.options.getUser("user"),
+			onMessage: () => (args.length > 3 ? args[2] : undefined),
+		});
+
+		if (!user) {
+			return;
+		}
+
+		const character = await this.getCharacter(context, user.id, {
+			onInteraction: (interaction) => interaction.options.getString("character", true),
+			onMessage: () => (args.length > 3 ? args[3] : args[2]),
+		});
+
+		if (!character) {
+			return;
+		}
+
 		await context.send({
-			embeds: [getCharacterInformationEmbed(character)],
+			embeds: [CharacterManager.getInformationEmbed(character)],
 		});
 	}
 
@@ -492,7 +495,9 @@ export default class CharacterCommand extends HybridCommand {
 			}
 		}
 
-		await updateUserCharacterById(context.user.id, character.id, { name });
+		const characterManager = CharacterManager.create(context.user.id);
+
+		await characterManager.update(character.id, { name });
 
 		await context.send(
 			`Successfully changed character name from \`${character.name || character.tag}\` to \`${name}\`.`,
@@ -513,14 +518,15 @@ export default class CharacterCommand extends HybridCommand {
 			}
 		}
 
-		const existed = await getUserCharacterByTag(context.user.id, newTag);
+		const characterManager = CharacterManager.create(context.user.id);
+
+		const existed = await characterManager.getByTag(newTag);
 
 		if (existed) {
-			await context.send(`${getDisplayNameWithTag(existed)} already owned this tag.`);
+			await context.send(`${CharacterManager.getDisplayName(existed)} already owned this tag.`);
 			return;
 		}
-
-		await updateUserCharacterById(context.user.id, character.id, { tag: newTag });
+		await characterManager.update(character.id, { tag: newTag });
 
 		await context.send(
 			`Successfully changed character tag from \`${character.tag}\` to \`${newTag}\`.`,
@@ -558,9 +564,11 @@ export default class CharacterCommand extends HybridCommand {
 			return;
 		}
 
+		const characterManager = CharacterManager.create(context.user.id);
+
 		// Notify user about file uploading and also a deferring for interaction
 		const originalMessage = await context.send({
-			content: "Uploading files...",
+			content: "Uploading file...",
 		});
 
 		const baseMessage = await originalMessage.edit({
@@ -579,7 +587,7 @@ export default class CharacterCommand extends HybridCommand {
 			return;
 		}
 
-		await updateUserCharacterById(context.user.id, character.id, {
+		await characterManager.update(character.id, {
 			avatarURL: newAvatar.url,
 		});
 
@@ -604,15 +612,19 @@ export default class CharacterCommand extends HybridCommand {
 
 		prefix = prefix.toLowerCase();
 
-		const characters = await getUserCharacters(context.user.id);
+		const characterManager = CharacterManager.create(context.user.id);
+
+		const characters = await characterManager.getAll();
 		const existed = characters.find((char) => char.prefix === prefix);
 
 		if (existed) {
-			await context.send(`${getDisplayNameWithTag(existed)} already owned prefix \`${prefix}\`.`);
+			await context.send(
+				`${CharacterManager.getDisplayName(existed)} already owned prefix \`${prefix}\`.`,
+			);
 			return;
 		}
 
-		await updateUserCharacterById(context.user.id, character.id, { prefix });
+		await characterManager.update(character.id, { prefix });
 
 		await context.send(
 			character.prefix

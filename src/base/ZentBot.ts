@@ -1,5 +1,5 @@
 import type { Snowflake, Webhook } from "discord.js";
-import { Client, Collection, GatewayIntentBits } from "discord.js";
+import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
 
 import config from "../config.js";
 
@@ -14,11 +14,14 @@ export default class ZentBot<Ready extends boolean = boolean> extends Client<Rea
 		super({
 			intents: [
 				GatewayIntentBits.Guilds,
+				GatewayIntentBits.GuildMembers,
+				GatewayIntentBits.GuildPresences,
 				GatewayIntentBits.GuildMessages,
 				GatewayIntentBits.MessageContent,
 				GatewayIntentBits.GuildModeration,
 				GatewayIntentBits.GuildWebhooks,
 			],
+			partials: [Partials.GuildMember, Partials.User],
 		});
 
 		this.managers = new ZentManagerRegistry(this);

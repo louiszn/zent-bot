@@ -5,7 +5,7 @@ import * as schema from "./schema/index.js";
 
 import config from "../config.js";
 
-const pool = new Pool({
+export const pool = new Pool({
 	connectionString: config.databaseURL,
 	max: 10,
 	min: 2,

@@ -12,11 +12,11 @@ import {
 
 import { ContextMenuCommand, useContextMenuCommand } from "../../base/command/Command.js";
 
-import { MAX_MESSAGE_CONTENT_LENGTH } from "../../libs/character.js";
 import { eq } from "drizzle-orm";
 
 import db from "../../database/index.js";
 import { characterMessagesTable } from "../../database/schema/character.js";
+import { MAX_MESSAGE_CONTENT_LENGTH } from "../../libs/CharacterManager.js";
 
 @useContextMenuCommand({
 	data: new ContextMenuCommandBuilder()

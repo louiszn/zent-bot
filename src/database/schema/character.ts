@@ -1,15 +1,15 @@
 import { relations } from "drizzle-orm";
 import { pgTable, varchar } from "drizzle-orm/pg-core";
-import { MAX_MESSAGE_CONTENT_LENGTH } from "../../libs/character.js";
+import { MAX_MESSAGE_CONTENT_LENGTH } from "../../libs/CharacterManager.js";
 
 export const charactersTable = pgTable("characters", {
 	id: varchar("id", { length: 20 }).notNull().primaryKey(),
 
-	name: varchar("name", { length: 500 }),
+	name: varchar("name", { length: 50 }),
 
-	tag: varchar("tag", { length: 500 }).notNull(),
+	tag: varchar("tag", { length: 50 }).notNull(),
 
-	prefix: varchar("prefix", { length: 50 }),
+	prefix: varchar("prefix", { length: 15 }),
 
 	userId: varchar("user_id", { length: 20 }).notNull(),
 
@@ -23,7 +23,9 @@ export const characterMessagesTable = pgTable("character_messages", {
 
 	repliedMessageId: varchar("replied_message_id", { length: 20 }),
 
-	characterId: varchar("character_id", { length: 20 }).references(() => charactersTable.id),
+	characterId: varchar("character_id", { length: 20 }).references(() => charactersTable.id, {
+		onDelete: "set null",
+	}),
 });
 
 export const characterMessagesRelations = relations(characterMessagesTable, ({ one }) => ({

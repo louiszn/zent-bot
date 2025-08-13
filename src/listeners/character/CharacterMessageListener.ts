@@ -1,16 +1,11 @@
-import type { Message, Webhook } from "discord.js";
+import type { Message } from "discord.js";
 import { Events, PermissionFlagsBits } from "discord.js";
 import { Listener, useListener } from "../../base/listener/Listener.js";
 
 import db from "../../database/index.js";
 
-import {
-	getReplyPreview,
-	getUserCharacters,
-	MAX_MESSAGE_CONTENT_LENGTH,
-} from "../../libs/character.js";
-import { getWebhook } from "../../libs/webhook.js";
 import logger from "../../libs/logger.js";
+import CharacterManager, { MAX_MESSAGE_CONTENT_LENGTH } from "../../libs/CharacterManager.js";
 import { characterMessagesTable } from "../../database/schema/character.js";
 
 @useListener(Events.MessageCreate)
@@ -35,9 +30,15 @@ export default class CharacterMessageListener extends Listener<Events.MessageCre
 			return;
 		}
 
-		const characters = await getUserCharacters(message.author.id);
+		const characterManager = CharacterManager.create(message.author.id);
 
-		if (!characters.size) {
+		const [characters, webhook, repliedMessagePreview] = await Promise.all([
+			characterManager.getAll(),
+			CharacterManager.createWebhook(message.channel),
+			this.getRepliedMessagePreview(message),
+		]);
+
+		if (!characters.size || !webhook) {
 			return;
 		}
 
@@ -65,44 +66,24 @@ export default class CharacterMessageListener extends Listener<Events.MessageCre
 			return;
 		}
 
-		let replyPreview: string | null = null;
-
-		if (message.reference?.messageId) {
-			try {
-				const repliedMessage = await message.channel.messages.fetch(message.reference.messageId);
-				replyPreview = await getReplyPreview(repliedMessage);
-			} catch (error) {
-				logger.error("Failed to fetch replied message:", error);
-			}
-		}
-
-		let webhook: Webhook | null = null;
-
 		try {
-			webhook = await getWebhook(message.channel);
-		} catch (error) {
-			logger.error("Failed to fetch or create a new webhook:", error);
-		}
+			const [characterMessage] = await Promise.all([
+				webhook.send({
+					username: character.name || character.tag,
+					avatarURL: character.avatarURL || undefined,
+					content: repliedMessagePreview
+						? `${repliedMessagePreview}\n${contentToSend}`
+						: contentToSend,
+					threadId: message.channel.isThread() ? message.channelId : undefined,
+					files: message.attachments.map((attachment) => ({
+						name: attachment.name,
+						attachment: attachment.proxyURL,
+					})),
+				}),
+				message.delete(),
+			]);
 
-		if (!webhook) {
-			return;
-		}
-
-		try {
-			await message.delete();
-
-			const characterMessage = await webhook.send({
-				username: character.name || character.tag,
-				avatarURL: character.avatarURL || undefined,
-				content: replyPreview ? `${replyPreview}\n${contentToSend}` : contentToSend,
-				threadId: message.channel.isThread() ? message.channelId : undefined,
-				files: message.attachments.map((attachment) => ({
-					name: attachment.name,
-					attachment: attachment.proxyURL,
-				})),
-			});
-
-			await db.insert(characterMessagesTable).values({
+			db.insert(characterMessagesTable).values({
 				id: characterMessage.id,
 				content: contentToSend,
 				characterId: character.id,
@@ -111,5 +92,16 @@ export default class CharacterMessageListener extends Listener<Events.MessageCre
 		} catch (error) {
 			logger.error("Failed to send webhook message:", error);
 		}
+	}
+
+	private async getRepliedMessagePreview(message: Message) {
+		if (!message.reference?.messageId) {
+			return null;
+		}
+
+		return await message.channel.messages
+			.fetch(message.reference.messageId)
+			.then((msg) => CharacterManager.getRepliedMessageReview(msg))
+			.catch(() => null);
 	}
 }
