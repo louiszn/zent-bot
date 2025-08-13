@@ -5,7 +5,8 @@ RUN npm install --global corepack@latest && corepack enable pnpm
 
 WORKDIR /app/zent-bot
 
-COPY package*.json ./
+COPY package.json ./
+COPY pnpm-lock.yaml ./
 
 RUN pnpm install --frozen-lockfile
 
