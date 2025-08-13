@@ -7,9 +7,6 @@ settings:
 importers:
   .:
     dependencies:
-      "@prisma/client":
-        specifier: ^6.11.0
-        version: 6.13.0(prisma@6.13.0(typescript@5.9.2))(typescript@5.9.2)
       "@sapphire/snowflake":
         specifier: ^3.5.5
         version: 3.5.5
@@ -56,9 +53,6 @@ importers:
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
-      prisma:
-        specifier: ^6.11.0
-        version: 6.13.0(typescript@5.9.2)
       rimraf:
         specifier: ^6.0.1
         version: 6.0.1
@@ -2596,8 +2590,10 @@ snapshots:
       "@babel/helper-validator-identifier": 7.27.1
       js-tokens: 4.0.0
       picocolors: 1.1.1
+    optional: true
 
-  "@babel/helper-validator-identifier@7.27.1": {}
+  "@babel/helper-validator-identifier@7.27.1":
+    optional: true
 
   "@discordjs/builders@1.11.2":
     dependencies:
@@ -2890,6 +2886,7 @@ snapshots:
     optionalDependencies:
       prisma: 6.13.0(typescript@5.9.2)
       typescript: 5.9.2
+    optional: true
 
   "@prisma/config@6.13.0":
     dependencies:
@@ -2899,10 +2896,13 @@ snapshots:
       read-package-up: 11.0.0
     transitivePeerDependencies:
       - magicast
+    optional: true
 
-  "@prisma/debug@6.13.0": {}
+  "@prisma/debug@6.13.0":
+    optional: true
 
-  "@prisma/engines-version@6.13.0-35.361e86d0ea4987e9f53a565309b3eed797a6bcbd": {}
+  "@prisma/engines-version@6.13.0-35.361e86d0ea4987e9f53a565309b3eed797a6bcbd":
+    optional: true
 
   "@prisma/engines@6.13.0":
     dependencies:
@@ -2910,16 +2910,19 @@ snapshots:
       "@prisma/engines-version": 6.13.0-35.361e86d0ea4987e9f53a565309b3eed797a6bcbd
       "@prisma/fetch-engine": 6.13.0
       "@prisma/get-platform": 6.13.0
+    optional: true
 
   "@prisma/fetch-engine@6.13.0":
     dependencies:
       "@prisma/debug": 6.13.0
       "@prisma/engines-version": 6.13.0-35.361e86d0ea4987e9f53a565309b3eed797a6bcbd
       "@prisma/get-platform": 6.13.0
+    optional: true
 
   "@prisma/get-platform@6.13.0":
     dependencies:
       "@prisma/debug": 6.13.0
+    optional: true
 
   "@sapphire/async-queue@1.5.5": {}
 
@@ -2932,7 +2935,8 @@ snapshots:
 
   "@sapphire/snowflake@3.5.5": {}
 
-  "@standard-schema/spec@1.0.0": {}
+  "@standard-schema/spec@1.0.0":
+    optional: true
 
   "@types/estree@1.0.8": {}
 
@@ -2942,7 +2946,8 @@ snapshots:
     dependencies:
       undici-types: 7.10.0
 
-  "@types/normalize-package-data@2.4.4": {}
+  "@types/normalize-package-data@2.4.4":
+    optional: true
 
   "@types/pg@8.15.5":
     dependencies:
@@ -3109,6 +3114,7 @@ snapshots:
       perfect-debounce: 1.0.0
       pkg-types: 2.2.0
       rc9: 2.1.2
+    optional: true
 
   callsites@3.1.0: {}
 
@@ -3122,10 +3128,12 @@ snapshots:
   chokidar@4.0.3:
     dependencies:
       readdirp: 4.1.2
+    optional: true
 
   citty@0.1.6:
     dependencies:
       consola: 3.4.2
+    optional: true
 
   cli-cursor@5.0.0:
     dependencies:
@@ -3148,9 +3156,11 @@ snapshots:
 
   concat-map@0.0.1: {}
 
-  confbox@0.2.2: {}
+  confbox@0.2.2:
+    optional: true
 
-  consola@3.4.2: {}
+  consola@3.4.2:
+    optional: true
 
   cross-spawn@7.0.6:
     dependencies:
@@ -3164,11 +3174,14 @@ snapshots:
 
   deep-is@0.1.4: {}
 
-  deepmerge-ts@7.1.5: {}
+  deepmerge-ts@7.1.5:
+    optional: true
 
-  defu@6.1.4: {}
+  defu@6.1.4:
+    optional: true
 
-  destr@2.0.5: {}
+  destr@2.0.5:
+    optional: true
 
   discord-api-types@0.38.18: {}
 
@@ -3191,7 +3204,8 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  dotenv@16.6.1: {}
+  dotenv@16.6.1:
+    optional: true
 
   dotenv@17.2.1: {}
 
@@ -3217,6 +3231,7 @@ snapshots:
     dependencies:
       "@standard-schema/spec": 1.0.0
       fast-check: 3.23.2
+    optional: true
 
   emoji-regex@10.4.0: {}
 
@@ -3360,11 +3375,13 @@ snapshots:
 
   eventemitter3@5.0.1: {}
 
-  exsolve@1.0.7: {}
+  exsolve@1.0.7:
+    optional: true
 
   fast-check@3.23.2:
     dependencies:
       pure-rand: 6.1.0
+    optional: true
 
   fast-deep-equal@3.1.3: {}
 
@@ -3392,7 +3409,8 @@ snapshots:
     dependencies:
       to-regex-range: 5.0.1
 
-  find-up-simple@1.0.1: {}
+  find-up-simple@1.0.1:
+    optional: true
 
   find-up@5.0.0:
     dependencies:
@@ -3428,6 +3446,7 @@ snapshots:
       node-fetch-native: 1.6.7
       nypm: 0.6.1
       pathe: 2.0.3
+    optional: true
 
   glob-parent@5.1.2:
     dependencies:
@@ -3457,6 +3476,7 @@ snapshots:
   hosted-git-info@7.0.2:
     dependencies:
       lru-cache: 10.4.3
+    optional: true
 
   husky@9.1.7: {}
 
@@ -3471,7 +3491,8 @@ snapshots:
 
   imurmurhash@0.1.4: {}
 
-  index-to-position@1.1.0: {}
+  index-to-position@1.1.0:
+    optional: true
 
   is-extglob@2.1.1: {}
 
@@ -3495,9 +3516,11 @@ snapshots:
     dependencies:
       "@isaacs/cliui": 8.0.2
 
-  jiti@2.5.1: {}
+  jiti@2.5.1:
+    optional: true
 
-  js-tokens@4.0.0: {}
+  js-tokens@4.0.0:
+    optional: true
 
   js-yaml@4.1.0:
     dependencies:
@@ -3562,7 +3585,8 @@ snapshots:
       strip-ansi: 7.1.0
       wrap-ansi: 9.0.0
 
-  lru-cache@10.4.3: {}
+  lru-cache@10.4.3:
+    optional: true
 
   lru-cache@11.1.0: {}
 
@@ -3597,13 +3621,15 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  node-fetch-native@1.6.7: {}
+  node-fetch-native@1.6.7:
+    optional: true
 
   normalize-package-data@6.0.2:
     dependencies:
       hosted-git-info: 7.0.2
       semver: 7.7.2
       validate-npm-package-license: 3.0.4
+    optional: true
 
   nypm@0.6.1:
     dependencies:
@@ -3612,8 +3638,10 @@ snapshots:
       pathe: 2.0.3
       pkg-types: 2.2.0
       tinyexec: 1.0.1
+    optional: true
 
-  ohash@2.0.11: {}
+  ohash@2.0.11:
+    optional: true
 
   onetime@7.0.0:
     dependencies:
@@ -3647,6 +3675,7 @@ snapshots:
       "@babel/code-frame": 7.27.1
       index-to-position: 1.1.0
       type-fest: 4.41.0
+    optional: true
 
   path-exists@4.0.0: {}
 
@@ -3657,9 +3686,11 @@ snapshots:
       lru-cache: 11.1.0
       minipass: 7.1.2
 
-  pathe@2.0.3: {}
+  pathe@2.0.3:
+    optional: true
 
-  perfect-debounce@1.0.0: {}
+  perfect-debounce@1.0.0:
+    optional: true
 
   pg-cloudflare@1.2.7:
     optional: true
@@ -3696,7 +3727,8 @@ snapshots:
     dependencies:
       split2: 4.2.0
 
-  picocolors@1.1.1: {}
+  picocolors@1.1.1:
+    optional: true
 
   picomatch@2.3.1: {}
 
@@ -3707,6 +3739,7 @@ snapshots:
       confbox: 0.2.2
       exsolve: 1.0.7
       pathe: 2.0.3
+    optional: true
 
   postgres-array@2.0.0: {}
 
@@ -3730,10 +3763,12 @@ snapshots:
       typescript: 5.9.2
     transitivePeerDependencies:
       - magicast
+    optional: true
 
   punycode@2.3.1: {}
 
-  pure-rand@6.1.0: {}
+  pure-rand@6.1.0:
+    optional: true
 
   queue-microtask@1.2.3: {}
 
@@ -3741,12 +3776,14 @@ snapshots:
     dependencies:
       defu: 6.1.4
       destr: 2.0.5
+    optional: true
 
   read-package-up@11.0.0:
     dependencies:
       find-up-simple: 1.0.1
       read-pkg: 9.0.1
       type-fest: 4.41.0
+    optional: true
 
   read-pkg@9.0.1:
     dependencies:
@@ -3755,8 +3792,10 @@ snapshots:
       parse-json: 8.3.0
       type-fest: 4.41.0
       unicorn-magic: 0.1.0
+    optional: true
 
-  readdirp@4.1.2: {}
+  readdirp@4.1.2:
+    optional: true
 
   resolve-from@4.0.0: {}
 
@@ -3811,15 +3850,19 @@ snapshots:
     dependencies:
       spdx-expression-parse: 3.0.1
       spdx-license-ids: 3.0.22
+    optional: true
 
-  spdx-exceptions@2.5.0: {}
+  spdx-exceptions@2.5.0:
+    optional: true
 
   spdx-expression-parse@3.0.1:
     dependencies:
       spdx-exceptions: 2.5.0
       spdx-license-ids: 3.0.22
+    optional: true
 
-  spdx-license-ids@3.0.22: {}
+  spdx-license-ids@3.0.22:
+    optional: true
 
   split2@4.2.0: {}
 
@@ -3857,7 +3900,8 @@ snapshots:
     dependencies:
       has-flag: 4.0.0
 
-  tinyexec@1.0.1: {}
+  tinyexec@1.0.1:
+    optional: true
 
   to-regex-range@5.0.1:
     dependencies:
@@ -3882,7 +3926,8 @@ snapshots:
     dependencies:
       prelude-ls: 1.2.1
 
-  type-fest@4.41.0: {}
+  type-fest@4.41.0:
+    optional: true
 
   typescript-eslint@8.39.0(eslint@9.33.0(jiti@2.5.1))(typescript@5.9.2):
     dependencies:
@@ -3901,7 +3946,8 @@ snapshots:
 
   undici@6.21.3: {}
 
-  unicorn-magic@0.1.0: {}
+  unicorn-magic@0.1.0:
+    optional: true
 
   uri-js@4.4.1:
     dependencies:
@@ -3911,6 +3957,7 @@ snapshots:
     dependencies:
       spdx-correct: 3.2.0
       spdx-expression-parse: 3.0.1
+    optional: true
 
   which@2.0.2:
     dependencies:
