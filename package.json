@@ -23,14 +23,12 @@
 		"husky": "^9.1.7",
 		"lint-staged": "^16.1.5",
 		"prettier": "^3.6.2",
-		"prisma": "^6.11.0",
 		"rimraf": "^6.0.1",
 		"tsx": "^4.20.3",
 		"typescript": "^5.8.3",
 		"typescript-eslint": "^8.35.1"
 	},
 	"dependencies": {
-		"@prisma/client": "^6.11.0",
 		"@sapphire/snowflake": "^3.5.5",
 		"colorette": "^2.0.20",
 		"discord.js": "^14.21.0",

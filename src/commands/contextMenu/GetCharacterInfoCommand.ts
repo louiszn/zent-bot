@@ -7,10 +7,10 @@ import {
 } from "discord.js";
 
 import { ContextMenuCommand, useContextMenuCommand } from "../../base/command/Command.js";
-import { getCharacterInformationEmbed } from "../../libs/character.js";
 import db from "../../database/index.js";
 import { characterMessagesTable } from "../../database/schema/character.js";
 import { eq } from "drizzle-orm";
+import CharacterManager from "../../libs/CharacterManager.js";
 
 @useContextMenuCommand({
 	data: new ContextMenuCommandBuilder()
@@ -46,7 +46,7 @@ export default class GetCharacterInfoCommand extends ContextMenuCommand {
 		}
 
 		await interaction.reply({
-			embeds: [getCharacterInformationEmbed(characterMessage.character)],
+			embeds: [CharacterManager.getInformationEmbed(characterMessage.character)],
 			flags: MessageFlags.Ephemeral,
 		});
 	}

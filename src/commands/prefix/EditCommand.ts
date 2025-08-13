@@ -2,11 +2,11 @@ import type { Message } from "discord.js";
 import { PrefixCommand, usePrefixCommand } from "../../base/command/Command.js";
 
 import { extractId } from "../../utils/string.js";
-import { getWebhook } from "../../libs/webhook.js";
 import db from "../../database/index.js";
 import { eq } from "drizzle-orm";
+
 import { characterMessagesTable } from "../../database/schema/character.js";
-import { getReplyPreview } from "../../libs/character.js";
+import CharacterManager from "../../libs/CharacterManager.js";
 
 @usePrefixCommand({
 	triggers: ["edit"],
@@ -63,7 +63,7 @@ export default class DeleteCommand extends PrefixCommand {
 			return;
 		}
 
-		const webhook = await getWebhook(message.channel);
+		const webhook = await CharacterManager.createWebhook(message.channel);
 
 		if (!webhook || targetMessage.webhookId !== webhook.id) {
 			await message.channel.send(
@@ -87,7 +87,7 @@ export default class DeleteCommand extends PrefixCommand {
 				return null;
 			}
 
-			return getReplyPreview(repliedMessage);
+			return CharacterManager.getRepliedMessageReview(repliedMessage);
 		})();
 
 		await webhook.editMessage(targetMessage, {
