@@ -1,5 +1,4 @@
-import type { Snowflake, Webhook } from "discord.js";
-import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
+import { Client, GatewayIntentBits, Partials } from "discord.js";
 
 import config from "../config.js";
 
@@ -7,8 +6,6 @@ import ZentManagerRegistry from "./ZentManagerRegistry.js";
 
 export default class ZentBot<Ready extends boolean = boolean> extends Client<Ready> {
 	public managers: ZentManagerRegistry<Ready>;
-
-	public botWebhooks: Collection<Snowflake, Webhook> = new Collection(); // key is channel ID
 
 	public constructor() {
 		super({

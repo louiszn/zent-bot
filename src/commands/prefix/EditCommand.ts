@@ -2,7 +2,6 @@ import type { Message } from "discord.js";
 import { PrefixCommand, usePrefixCommand } from "../../base/command/Command.js";
 
 import { extractId } from "../../utils/string.js";
-import { getWebhook } from "../../libs/webhook.js";
 import db from "../../database/index.js";
 import { eq } from "drizzle-orm";
 
@@ -64,7 +63,7 @@ export default class DeleteCommand extends PrefixCommand {
 			return;
 		}
 
-		const webhook = await getWebhook(message.channel);
+		const webhook = await CharacterManager.createWebhook(message.channel);
 
 		if (!webhook || targetMessage.webhookId !== webhook.id) {
 			await message.channel.send(
