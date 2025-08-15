@@ -6,9 +6,8 @@
 		"strict": true,
 		"skipLibCheck": true,
 		"outDir": "dist",
-		"rootDir": "src",
 		"noImplicitOverride": true
 	},
-	"include": ["src", "eslint.config.mjs"],
+	"include": ["src"],
 	"exclude": ["node_modules"]
 }
