@@ -5,7 +5,7 @@ import CharacterManager from "../../libs/CharacterManager.js";
 
 @useListener(Events.GuildAuditLogEntryCreate)
 export default class WebhookDeleteListener extends Listener<Events.GuildAuditLogEntryCreate> {
-	public async execute(entry: GuildAuditLogsEntry): Promise<void> {
+	public execute(entry: GuildAuditLogsEntry): void {
 		if (entry.action !== AuditLogEvent.WebhookDelete) {
 			return;
 		}

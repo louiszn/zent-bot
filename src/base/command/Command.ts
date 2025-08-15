@@ -1,5 +1,6 @@
 import type {
 	AutocompleteInteraction,
+	Awaitable,
 	ContextMenuCommandBuilder,
 	ContextMenuCommandInteraction,
 	Guild,
@@ -23,25 +24,25 @@ import CommandRegistry from "./CommandRegistry.js";
 export abstract class BaseCommand {
 	public constructor(protected client: ZentBot<true>) {}
 
-	abstract execute(...args: unknown[]): Promise<void>;
+	abstract execute(...args: unknown[]): Awaitable<void>;
 }
 
 export abstract class PrefixCommand extends BaseCommand {
-	abstract override execute(message: Message<true>, args: string[]): Promise<void>;
+	abstract override execute(message: Message<true>, args: string[]): Awaitable<void>;
 }
 
 export abstract class SlashCommand extends BaseCommand {
-	abstract override execute(interaction: ChatInputCommandInteraction<"cached">): Promise<void>;
-	autocomplete?(interaction: AutocompleteInteraction<"cached">): Promise<void>;
+	abstract override execute(interaction: ChatInputCommandInteraction<"cached">): Awaitable<void>;
+	autocomplete?(interaction: AutocompleteInteraction<"cached">): Awaitable<void>;
 }
 
 export abstract class ContextMenuCommand extends BaseCommand {
-	abstract override execute(interaction: ContextMenuCommandInteraction<"cached">): Promise<void>;
+	abstract override execute(interaction: ContextMenuCommandInteraction<"cached">): Awaitable<void>;
 }
 
 export abstract class HybridCommand extends BaseCommand {
-	abstract override execute(context: HybridContext, args: string[]): Promise<void>;
-	autocomplete?(interaction: AutocompleteInteraction<"cached">): Promise<void>;
+	abstract override execute(context: HybridContext, args: string[]): Awaitable<void>;
+	autocomplete?(interaction: AutocompleteInteraction<"cached">): Awaitable<void>;
 }
 
 export type Command = PrefixCommand | SlashCommand | ContextMenuCommand | HybridCommand;
@@ -89,7 +90,7 @@ export class BaseHybridContext {
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	public async send(options: ContextSendOptions): Promise<Message<true>> {
+	public send(options: ContextSendOptions): Promise<Message<true>> {
 		throw new Error("Invalid source provided.");
 	}
 }

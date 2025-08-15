@@ -44,8 +44,8 @@ export default class ListenerManager<Ready extends boolean = boolean> {
 		constructor: ListenerConstructor<E>,
 		instance: Listener<E>,
 	) {
-		this.client[constructor.once ? "once" : "on"](constructor.eventName, (...args) =>
-			instance.execute(...args),
-		);
+		this.client[constructor.once ? "once" : "on"](constructor.eventName, (...args) => {
+			instance.execute(...args);
+		});
 	}
 }

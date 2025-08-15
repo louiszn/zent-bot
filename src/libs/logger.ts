@@ -16,33 +16,27 @@ enum LogLevel {
 }
 
 class Logger {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public log(...args: any[]): void {
+	public log(...args: unknown[]): void {
 		console.log(...args);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public info(...args: any[]): void {
+	public info(...args: unknown[]): void {
 		this.logInformation(LogLevel.Info, ...args);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public success(...args: any[]): void {
+	public success(...args: unknown[]): void {
 		this.logInformation(LogLevel.Success, ...args);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public error(...args: any[]): void {
+	public error(...args: unknown[]): void {
 		this.logInformation(LogLevel.Error, ...args);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public warn(...args: any[]): void {
+	public warn(...args: unknown[]): void {
 		this.logInformation(LogLevel.Warn, ...args);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	private logInformation(level: LogLevel, ...args: any[]) {
+	private logInformation(level: LogLevel, ...args: unknown[]) {
 		this.log(blackBright(formatTime(new Date())), this.getLevelTag(level), ...args);
 	}
 
