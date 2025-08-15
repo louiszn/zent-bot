@@ -1,6 +1,7 @@
 import type {
 	APIEmbedField,
 	AutocompleteInteraction,
+	ButtonInteraction,
 	ChatInputCommandInteraction,
 	MessageCreateOptions,
 	SlashCommandStringOption,
@@ -27,6 +28,7 @@ import { Paginator } from "../../libs/Paginator.js";
 import CharacterManager from "../../libs/CharacterManager.js";
 
 import type { Character } from "../../libs/CharacterManager.js";
+import logger from "../../libs/logger.js";
 
 const getCharacterOption = (option: SlashCommandStringOption) =>
 	option
@@ -333,10 +335,10 @@ export default class CharacterCommand extends HybridCommand {
 			time: 30_000,
 		});
 
-		collector.on("collect", async (interaction) => {
+		const handleClick = async (interaction: ButtonInteraction<"cached">) => {
 			switch (interaction.customId) {
 				case "character:delete:yes":
-					characterManager.delete(character.id);
+					await characterManager.delete(character.id);
 
 					// A better alternative to .edit() and .deferUpdate()
 					await interaction.update({
@@ -352,20 +354,26 @@ export default class CharacterCommand extends HybridCommand {
 			}
 
 			collector.stop();
+		};
+
+		collector.on("collect", (interaction) => {
+			handleClick(interaction).catch((error) => logger.error(error));
 		});
 
-		collector.on("ignore", async (interaction) => {
-			await interaction.reply({
-				content: "You can't use this button!",
-				flags: MessageFlags.Ephemeral,
-			});
+		collector.on("ignore", (interaction) => {
+			interaction
+				.reply({
+					content: "You can't use this button!",
+					flags: MessageFlags.Ephemeral,
+				})
+				.catch((error) => logger.error(error));
 		});
 
-		collector.on("end", async (collected) => {
+		collector.on("end", (collected) => {
 			// User can only interact the buttons once
 			// If the collected size is 0, that means user haven't pressed
 			if (collected.size === 0) {
-				await message.delete();
+				message.delete().catch(() => null);
 			}
 		});
 	}

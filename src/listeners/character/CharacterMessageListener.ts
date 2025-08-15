@@ -83,7 +83,7 @@ export default class CharacterMessageListener extends Listener<Events.MessageCre
 				message.delete(),
 			]);
 
-			db.insert(characterMessagesTable).values({
+			await db.insert(characterMessagesTable).values({
 				id: characterMessage.id,
 				content: contentToSend,
 				characterId: character.id,

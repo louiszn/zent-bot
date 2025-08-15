@@ -24,7 +24,7 @@ export default class RBDMessageListener extends Listener<Events.MessageCreate> {
 		if (!this.isMessageSpoilered(message)) {
 			await message.delete();
 			await message.channel.send(
-				`${message.author} các nội dung chứa link, ảnh hay video phải được làm ẩn.`,
+				`${message.author.toString()} các nội dung chứa link, ảnh hay video phải được làm ẩn.`,
 			);
 			return;
 		}
@@ -43,7 +43,7 @@ export default class RBDMessageListener extends Listener<Events.MessageCreate> {
 			});
 	}
 
-	private isMessageSpoilered(message: Message | MessageSnapshot) {
+	private isMessageSpoilered(message: Message | MessageSnapshot): boolean {
 		// Remove all text between double pipes (||), which is used in Discord to mark spoilers.
 		// This leaves only unspoilered content for us to check for unspoilered links.
 		const withoutSpoilersContent = message.content.replace(/\|\|.*?\|\|/gs, "");
@@ -73,7 +73,11 @@ export default class RBDMessageListener extends Listener<Events.MessageCreate> {
 			!hasUnspoileredLinks &&
 			!hasUnspoileredMedia &&
 			// Recursively check forwarded (snapshot) messages
-			message.messageSnapshots?.every(this.isMessageSpoilered)
+			Boolean(
+				message.messageSnapshots?.every((snapshot) => {
+					return this.isMessageSpoilered(snapshot);
+				}),
+			)
 		);
 	}
 }

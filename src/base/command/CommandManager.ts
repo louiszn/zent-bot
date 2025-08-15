@@ -98,12 +98,14 @@ export default class CommandManager<Ready extends boolean = boolean> {
 	}
 
 	private logRegistrationSummary(registries: CommandRegistries, counts: CommandRegistrationCounts) {
-		const totalRegistryCount = Object.values(registries).reduce(
-			(total, registry) => total + registry.length,
+		const totalRegistryCount = Object.values(
+			registries as unknown as Record<string, CommandConstructor[]>,
+		).reduce((total, registry) => total + registry.length, 0);
+
+		const totalRegisteredCount = Object.values(counts as unknown as Record<string, number>).reduce(
+			(total, count) => total + count,
 			0,
 		);
-
-		const totalRegisteredCount = Object.values(counts).reduce((total, count) => total + count, 0);
 
 		logger.success(
 			[

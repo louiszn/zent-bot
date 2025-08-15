@@ -1,4 +1,4 @@
-import type { ClientEvents } from "discord.js";
+import type { Awaitable, ClientEvents } from "discord.js";
 
 import type ZentBot from "../ZentBot.js";
 import ListenerRegistry from "./ListenerRegistry.js";
@@ -6,7 +6,7 @@ import ListenerRegistry from "./ListenerRegistry.js";
 export abstract class Listener<E extends keyof ClientEvents> {
 	public constructor(protected client: ZentBot<true>) {}
 
-	public abstract execute(...args: ClientEvents[E]): Promise<void>;
+	public abstract execute(...args: ClientEvents[E]): Awaitable<void>;
 }
 
 export interface ListenerConstructor<E extends keyof ClientEvents> {
