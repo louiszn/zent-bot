@@ -6,7 +6,8 @@
 		"strict": true,
 		"skipLibCheck": true,
 		"outDir": "dist",
-		"noImplicitOverride": true
+		"noImplicitOverride": true,
+		"experimentalDecorators": true
 	},
 	"include": ["src"],
 	"exclude": ["node_modules"]

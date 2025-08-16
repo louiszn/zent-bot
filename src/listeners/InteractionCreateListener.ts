@@ -10,9 +10,11 @@ import type {
 import { DiscordAPIError, Events, MessageFlags, RESTJSONErrorCodes } from "discord.js";
 
 import { Listener, useListener } from "../base/listener/Listener.js";
-import { HybridCommand, SlashHybridContext } from "../base/command/Command.js";
+import type { CommandWithSubcommandsConstructor } from "../base/command/Command.js";
+import { HybridCommand } from "../base/command/Command.js";
 
 import logger from "../libs/logger.js";
+import { SlashHybridContext } from "../base/command/HybridContext.js";
 
 @useListener(Events.InteractionCreate)
 export default class InteractionCreateListener extends Listener<Events.InteractionCreate> {
@@ -87,12 +89,16 @@ export default class InteractionCreateListener extends Listener<Events.Interacti
 			return;
 		}
 
+		const { subcommands } = command.constructor as CommandWithSubcommandsConstructor;
+
 		try {
 			if (command instanceof HybridCommand) {
 				await command.execute(new SlashHybridContext(interaction), []);
 			} else {
 				await command.execute(interaction);
 			}
+
+			await subcommands.handleChatInput(command, interaction);
 		} catch (error) {
 			await this.handleRepliableInteractionError(interaction, error);
 		}
