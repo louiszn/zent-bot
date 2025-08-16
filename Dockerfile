@@ -28,4 +28,4 @@ COPY --from=builder /app/zent-bot/dist ./dist
 
 ENV NODE_ENV=production
 
-CMD ["sh", "-c", "pnpm run deloy && pnpm run start"]
+CMD ["sh", "-c", "pnpm run deploy && pnpm run start"]

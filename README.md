@@ -43,7 +43,7 @@ pnpm build
 
 After building, `dist` directory will be created, containing JavaScript version of the source code.
 
-#### 5. Deloy all application commands
+#### 5. Deploy all application commands
 
 You have to deploy commands for your bot manually.
 
