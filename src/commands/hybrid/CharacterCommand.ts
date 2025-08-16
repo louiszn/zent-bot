@@ -1,12 +1,14 @@
 import type {
 	APIEmbedField,
 	AutocompleteInteraction,
+	Awaitable,
 	ButtonInteraction,
 	ChatInputCommandInteraction,
 	MessageCreateOptions,
 	SlashCommandStringOption,
 	User,
 } from "discord.js";
+
 import {
 	ActionRowBuilder,
 	AttachmentBuilder,
@@ -18,13 +20,17 @@ import {
 	MessageFlags,
 	SlashCommandBuilder,
 } from "discord.js";
-import type { HybridContext } from "../../base/command/Command.js";
+
 import { HybridCommand, useHybridCommand } from "../../base/command/Command.js";
+import { useSubcommand } from "../../base/command/subcommand/Subcommand.js";
+
+import type { HybridContext } from "../../base/command/HybridContext.js";
 
 import { extractId, sanitize } from "../../utils/string.js";
 
 import { isImageUrl } from "../../utils/url.js";
 import { Paginator } from "../../libs/Paginator.js";
+
 import CharacterManager from "../../libs/CharacterManager.js";
 
 import type { Character } from "../../libs/CharacterManager.js";
@@ -140,6 +146,9 @@ const getCharacterOption = (option: SlashCommandStringOption) =>
 	prefixTriggers: ["character", "char"],
 })
 export default class CharacterCommand extends HybridCommand {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	public override execute(context: HybridContext, args: string[]): Awaitable<void> {}
+
 	public override async autocomplete(interaction: AutocompleteInteraction) {
 		const focusedOption = interaction.options.getFocused(true);
 
@@ -175,31 +184,8 @@ export default class CharacterCommand extends HybridCommand {
 		);
 	}
 
-	public async execute(context: HybridContext, args: string[]) {
-		const choice = context.isInteraction()
-			? context.source.options.getSubcommandGroup(false) || context.source.options.getSubcommand()
-			: args[1];
-
-		switch (choice) {
-			case "create":
-				await this.onCreate(context, args);
-				break;
-			case "edit":
-				await this.onEdit(context, args);
-				break;
-			case "list":
-				await this.onList(context, args);
-				break;
-			case "info":
-				await this.onInfo(context, args);
-				break;
-			case "delete":
-				await this.onDelete(context, args);
-				break;
-		}
-	}
-
-	private async onCreate(context: HybridContext, args: string[]) {
+	@useSubcommand("create")
+	protected async onCreate(context: HybridContext, args: string[]) {
 		let tag: string;
 
 		if (context.isInteraction()) {
@@ -296,7 +282,8 @@ export default class CharacterCommand extends HybridCommand {
 		return user;
 	}
 
-	private async onDelete(context: HybridContext, args: string[]) {
+	@useSubcommand("delete")
+	protected async onDelete(context: HybridContext, args: string[]) {
 		const characterManager = CharacterManager.create(context.user.id);
 
 		const character = await this.getCharacter(context, context.user.id, {
@@ -378,37 +365,8 @@ export default class CharacterCommand extends HybridCommand {
 		});
 	}
 
-	private async onEdit(context: HybridContext, args: string[]) {
-		const character = await this.getCharacter(context, context.user.id, {
-			onInteraction: (interaction) => interaction.options.getString("character", true),
-			onMessage: () => args[2],
-		});
-
-		if (!character) {
-			return;
-		}
-
-		const choice = context.isInteraction() ? context.source.options.getSubcommand() : args[3];
-
-		switch (choice) {
-			case "name":
-				await this.onNameEdit(context, args, character);
-				break;
-			case "tag":
-				await this.onTagEdit(context, args, character);
-				break;
-			case "prefix":
-				await this.onPrefixEdit(context, args, character);
-				break;
-			case "avatar":
-				await this.onAvatarEdit(context, args, character);
-				break;
-			default:
-				break;
-		}
-	}
-
-	private async onList(context: HybridContext, args: string[]) {
+	@useSubcommand("list")
+	protected async onList(context: HybridContext, args: string[]) {
 		const user = await this.getUser(context, {
 			onInteraction: (interaction) => interaction.options.getUser("user"),
 			onMessage: () => args[2],
@@ -465,7 +423,8 @@ export default class CharacterCommand extends HybridCommand {
 		await paginator.start();
 	}
 
-	private async onInfo(context: HybridContext, args: string[]) {
+	@useSubcommand("info")
+	protected async onInfo(context: HybridContext, args: string[]) {
 		const user = await this.getUser(context, {
 			onInteraction: (interaction) => interaction.options.getUser("user"),
 			onMessage: () => (args.length > 3 ? args[2] : undefined),
@@ -489,7 +448,20 @@ export default class CharacterCommand extends HybridCommand {
 		});
 	}
 
-	private async onNameEdit(context: HybridContext, args: string[], character: Character) {
+	@useSubcommand({
+		chatInput: "edit.name",
+		prefixTriggers: ["edit.*.name"],
+	})
+	protected async onNameEdit(context: HybridContext, args: string[]) {
+		const character = await this.getCharacter(context, context.user.id, {
+			onInteraction: (interaction) => interaction.options.getString("character", true),
+			onMessage: () => args[2],
+		});
+
+		if (!character) {
+			return;
+		}
+
 		let name: string;
 
 		if (context.isInteraction()) {
@@ -512,7 +484,20 @@ export default class CharacterCommand extends HybridCommand {
 		);
 	}
 
-	private async onTagEdit(context: HybridContext, args: string[], character: Character) {
+	@useSubcommand({
+		chatInput: "edit.tag",
+		prefixTriggers: ["edit.*.tag"],
+	})
+	protected async onTagEdit(context: HybridContext, args: string[]) {
+		const character = await this.getCharacter(context, context.user.id, {
+			onInteraction: (interaction) => interaction.options.getString("character", true),
+			onMessage: () => args[2],
+		});
+
+		if (!character) {
+			return;
+		}
+
 		let newTag: string;
 
 		if (context.isInteraction()) {
@@ -541,7 +526,20 @@ export default class CharacterCommand extends HybridCommand {
 		);
 	}
 
-	private async onAvatarEdit(context: HybridContext, args: string[], character: Character) {
+	@useSubcommand({
+		chatInput: "edit.avatar",
+		prefixTriggers: ["edit.*.avatar"],
+	})
+	protected async onAvatarEdit(context: HybridContext, args: string[]) {
+		const character = await this.getCharacter(context, context.user.id, {
+			onInteraction: (interaction) => interaction.options.getString("character", true),
+			onMessage: () => args[2],
+		});
+
+		if (!character) {
+			return;
+		}
+
 		let avatarURL: string | null = null;
 
 		if (context.isInteraction()) {
@@ -604,7 +602,20 @@ export default class CharacterCommand extends HybridCommand {
 		});
 	}
 
-	private async onPrefixEdit(context: HybridContext, args: string[], character: Character) {
+	@useSubcommand({
+		chatInput: "edit.prefix",
+		prefixTriggers: ["edit.*.prefix"],
+	})
+	protected async onPrefixEdit(context: HybridContext, args: string[]) {
+		const character = await this.getCharacter(context, context.user.id, {
+			onInteraction: (interaction) => interaction.options.getString("character", true),
+			onMessage: () => args[2],
+		});
+
+		if (!character) {
+			return;
+		}
+
 		let prefix: string;
 
 		if (context.isInteraction()) {

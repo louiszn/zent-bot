@@ -33,12 +33,14 @@ const globalCommands: RESTPostAPIApplicationCommandsJSONBody[] = [];
 const guildCommandsMap = new Collection<string, RESTPostAPIApplicationCommandsJSONBody[]>();
 
 for (const command of allCommands) {
-	if (!command.guildIds?.length) {
+	const guildIds = command.guildIds?.filter(Boolean) || [];
+
+	if (!guildIds.length) {
 		globalCommands.push(command.data);
 		continue;
 	}
 
-	for (const guildId of command.guildIds) {
+	for (const guildId of guildIds) {
 		let guildCommands = guildCommandsMap.get(guildId);
 
 		if (!guildCommands) {
