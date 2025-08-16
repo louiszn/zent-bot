@@ -16,7 +16,7 @@ import {
 	TextInputBuilder,
 	TextInputStyle,
 } from "discord.js";
-import type { HybridContext } from "../base/command/Command.js";
+import type { HybridContext } from "../base/command/HybridContext.js";
 
 interface PaginationOptions {
 	pages: MessageCreateOptions[];
