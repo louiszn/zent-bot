@@ -20,10 +20,15 @@ import type { HybridContext } from "../../base/command/HybridContext.js";
 export default class InformationCommand extends HybridCommand {
 	private totalCommit!: number;
 
-	private async fecthCommit(amount: number) {
+	private async fecthCommit(amount: number): Promise<CommitList> {
 		const response = await fetch(
 			"https://api.github.com/repos/louiszn/zent-bot/commits?per_page=100",
 		);
+
+		if (!response.ok) {
+			this.totalCommit = 0;
+			return [];
+		}
 
 		const body = (await response.json()) as CommitList;
 
@@ -34,19 +39,10 @@ export default class InformationCommand extends HybridCommand {
 
 	public override async execute(context: HybridContext) {
 		const { client } = this;
+		const amountCommit = 3 as const;
 
 		const Louis = await client.users.fetch("1019066895195971666");
-		const commits = await this.fecthCommit(3);
-
-		const commitPrettier = commits.map((commit): string => {
-			const commitMessage =
-				commit.commit.message.split("\n")[0].length > 31
-					? commit.commit.message.split("\n")[0].slice(0, 30) + "..."
-					: commit.commit.message.split("\n")[0];
-			const commitID = commit.sha.slice(0, 7);
-
-			return `> ${hyperlink(`${inlineCode(commitID)} ${commitMessage}`, commit.html_url)} at ${time(new Date(commit.commit.author!.date!), TimestampStyles.LongDate)}`;
-		});
+		const commits = await this.fecthCommit(amountCommit);
 
 		const embed = new EmbedBuilder()
 			.setThumbnail(client.user.displayAvatarURL({ size: 128 }))
@@ -64,12 +60,6 @@ export default class InformationCommand extends HybridCommand {
 					name: "Uptime",
 					value: `${time(client.readyAt, TimestampStyles.LongDateTime)} (${time(client.readyAt, TimestampStyles.RelativeTime)})`,
 				},
-				{
-					name: "Recent commits:",
-					value:
-						commitPrettier.join("\n") +
-						`\nView more **${Math.min(this.totalCommit - 3, this.totalCommit)}** commits at our ${hyperlink("official repository commit history", "https://github.com/louiszn/zent-bot/commits/main/")}`,
-				},
 			])
 
 			.setFooter({
@@ -77,6 +67,35 @@ export default class InformationCommand extends HybridCommand {
 				iconURL: Louis.displayAvatarURL({ size: 128 }),
 			})
 			.setTimestamp(new Date());
+
+		if (commits.length === 0 && this.totalCommit === 0) {
+			embed.addFields({
+				name: "Recent Commits:",
+				value: "*An error ocured when fetching commit data*",
+			});
+
+			await context.send({
+				embeds: [embed],
+			});
+			return;
+		}
+
+		const commitPrettier = commits.map((commit): string => {
+			const commitMessage =
+				commit.commit.message.split("\n")[0].length > 31
+					? commit.commit.message.split("\n")[0].slice(0, 30) + "..."
+					: commit.commit.message.split("\n")[0];
+			const commitID = commit.sha.slice(0, 7);
+
+			return `> ${hyperlink(`${inlineCode(commitID)} ${commitMessage}`, commit.html_url)} at ${time(new Date(commit.commit.author!.date!), TimestampStyles.LongDate)}`;
+		});
+
+		embed.addFields({
+			name: "Recent Commits:",
+			value:
+				commitPrettier.join("\n") +
+				`\nView more **${Math.min(this.totalCommit - 3, this.totalCommit)}** commits at our ${hyperlink("official repository commit history", "https://github.com/louiszn/zent-bot/commits/main/")}`,
+		});
 
 		await context.send({
 			embeds: [embed],
@@ -87,6 +106,7 @@ export default class InformationCommand extends HybridCommand {
 /**
  * GitHub API Types for List Commits
  * Generated from GitHub API Response Schema
+ * Using Claude to generate the interface
  */
 
 // Base Git User type for author/committer information
