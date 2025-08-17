@@ -1,14 +1,14 @@
 # Zent Bot
 
-Zent Bot is an utility bot, originally made for our friends server with love for role playing.
+Zent Bot is an utility bot, originally made with love for our friends' server, especially for role playing.
 
 ## Installation
 
 ### Requirements
 
-- Node.js version >= 20
-- PNPM package manager
-- PostgreSQL database
+- [Node.js](https://nodejs.org/) version >= 20
+- [PNPM](https://pnpm.io) package manager
+- [PostgreSQL](https://www.postgresql.org/) database
 
 ### How to install
 
@@ -27,15 +27,30 @@ pnpm install
 
 #### 3. Setup environment variables
 
-Setup your `.env` file in the root of the project:
+`.env` file contains sensitive information, also known as "secrets", such as your bot token, etc. First, let's create a `.env` file from example one:
 
 ```sh
 cp .env.example .env
 ```
 
-Then fill everything with your information.
+Next, fill your `.env` file with your secrets by the following the comments in the file.
 
-#### 4. Build the project
+> [!TIP]  
+> You may want to specify `NODE_ENV` variable as `production`. Otherwise, it will use `development` by default.
+
+#### 4. Make changes for your database
+
+After [setting up the `.env` file](#3-setup-environment-variables), especially `DATABASE_URL` variable, You need to setup the tables for your database by using the following command:
+
+```sh
+pnpm exec drizzle-kit push
+```
+
+If your database have any existing tables, you may need to pull and migrate your database, see [Drizzle Migrations](https://orm.drizzle.team/docs/migrations).
+
+#### 5. Build the project
+
+This project is built completely with TypeScript. Unlike runtimes like [Bun](https://bun.sh/), [Deno](https://deno.com/), etc. which support TypeScript natively, Node.js, the runtime this project is currently using, TypeScript native support is still an experimental feature. You need to compile it into a JavaScript version by using this command:
 
 ```sh
 pnpm build
@@ -43,7 +58,7 @@ pnpm build
 
 After building, `dist` directory will be created, containing JavaScript version of the source code.
 
-#### 5. Deploy all application commands
+#### 6. Deploy all application commands
 
 You have to deploy commands for your bot manually.
 
@@ -53,7 +68,7 @@ pnpm deploy
 
 You may need to reload your Discord client to see the changes
 
-#### 6. Start the bot!
+#### 7. Start the bot!
 
 ```sh
 pnpm start
