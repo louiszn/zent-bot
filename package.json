@@ -40,6 +40,7 @@
 		"typescript-eslint": "^8.35.1"
 	},
 	"dependencies": {
+		"@octokit/rest": "^22.0.0",
 		"@sapphire/snowflake": "^3.5.5",
 		"colorette": "^2.0.20",
 		"discord.js": "^14.21.0",
@@ -47,6 +48,7 @@
 		"drizzle-orm": "^0.44.4",
 		"fast-glob": "^3.3.3",
 		"pg": "^8.16.3",
-		"picomatch": "^4.0.3"
+		"picomatch": "^4.0.3",
+		"type-fest": "^4.41.0"
 	}
 }

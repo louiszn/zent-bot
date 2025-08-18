@@ -2,10 +2,14 @@ import { Events } from "discord.js";
 import { Listener, useListener } from "../base/listener/Listener.js";
 import logger from "../libs/logger.js";
 import type ZentBot from "../base/ZentBot.js";
+import CommitManager from "../libs/CommitManager.js";
 
 @useListener(Events.ClientReady)
 export default class ReadyListener extends Listener<Events.ClientReady> {
-	public override execute(client: ZentBot<true>): void {
+	public override async execute(client: ZentBot<true>): Promise<void> {
 		logger.success(`Successfully logged in as ${client.user.tag}`);
+
+		await CommitManager.getAll(true);
+		CommitManager.startInterval();
 	}
 }
