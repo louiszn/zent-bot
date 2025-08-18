@@ -1,10 +1,19 @@
 {
 	"name": "zentbot",
+	"description": "Zent Bot is a utility bot, originally made with love for our friends' server, especially for role-playing.",
 	"version": "1.0.0",
-	"description": "",
-	"license": "MIT",
+	"private": true,
+	"license": "AGPL-3.0-only",
 	"author": "louiszn",
 	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/louiszn/zent-bot.git"
+	},
+	"bugs": {
+		"url": "https://github.com/louiszn/zent-bot/issues"
+	},
+	"homepage": "https://github.com/louiszn/zent-bot#readme",
 	"scripts": {
 		"start": "node dist/index.js",
 		"deploy": "node dist/deployCommands.js",
