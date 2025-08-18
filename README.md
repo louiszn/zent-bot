@@ -2,6 +2,12 @@
 
 Zent Bot is a utility bot, originally made with love for our friends' server, especially for role-playing.
 
+<div align="center">
+	<a href="https://discord.gg/pGnKbMfXke"><img alt="Discord" src="https://img.shields.io/discord/1353321517437681724?logo=discord&logoColor=white"></a>
+	<a href="https://github.com/louiszn/zent-bot/blob/main/LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/louiszn/zent-bot?logo=github&logoColor=white"></a>
+	<a href="https://github.com/louiszn/zent-bot/releases"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/louiszn/zent-bot?logo=github&logoColor=white"></a>
+</div>
+
 ## Installation
 
 ### Requirements
