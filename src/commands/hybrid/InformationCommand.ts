@@ -1,4 +1,6 @@
 import {
+	ButtonBuilder,
+	ButtonStyle,
 	codeBlock,
 	ContainerBuilder,
 	hyperlink,
@@ -59,18 +61,18 @@ export default class InformationCommand extends HybridCommand {
 			),
 		);
 
-		// container.addActionRowComponents<ButtonBuilder>((row) =>
-		// 	row.setComponents(
-		// 		new ButtonBuilder()
-		// 			.setStyle(ButtonStyle.Link)
-		// 			.setLabel("Ask in Discord server")
-		// 			.setURL("https://discord.gg/pGnKbMfXke"),
-		// 		new ButtonBuilder()
-		// 			.setStyle(ButtonStyle.Link)
-		// 			.setLabel("Open an issue")
-		// 			.setURL("https://github.com/louiszn/issues"),
-		// 	),
-		// );
+		container.addActionRowComponents<ButtonBuilder>((row) =>
+			row.setComponents(
+				new ButtonBuilder()
+					.setStyle(ButtonStyle.Link)
+					.setLabel("Server")
+					.setURL("https://discord.gg/pGnKbMfXke"),
+				new ButtonBuilder()
+					.setStyle(ButtonStyle.Link)
+					.setLabel("Repository")
+					.setURL("https://github.com/louiszn/zent-bot"),
+			),
+		);
 
 		container.addSeparatorComponents((separator) => separator);
 
