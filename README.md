@@ -101,6 +101,20 @@ If the bot doesn't start as expected, check your terminal output for any errors,
 
 Feel free to open issues or ask for help in our Discord server.
 
+## License
+
+Zent Bot is licensed under the [GNU Affero General Public License v3.0](./LICENSE).
+
+That means:
+
+- ✅ You may use, modify, and share this bot freely.
+- ✅ You must give proper credit (keep the copyright notice).
+- ✅ If you run a modified version (includes any content changes) publicly, you must share your changes.
+- ✅ You may run an unmodified version privately or publicly without needing to publish anything.
+- ❌ You may not relicense this project under a closed-source or proprietary license.
+
+This ensures Zent Bot stays free and open for everyone, while protecting the original authorship.
+
 ## Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests. You can also ask questions about the bot and the project in our Discord server ❤️
