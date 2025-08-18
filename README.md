@@ -68,6 +68,8 @@ This project is built completely with TypeScript. Unlike other runtimes like [Bu
 pnpm build
 ```
 
+After building, the `dist` directory will be created, containing the JavaScript version of the source code.
+
 #### 5. Make changes for your database
 
 After [setting up the `.env` file](#3-set-up-environment-variables), especially the `DATABASE_URL` variable, you need to set up the tables for your database by using the following command:
@@ -77,8 +79,6 @@ pnpm exec drizzle-kit push
 ```
 
 If your database has any existing tables, you may need to pull and migrate your database, see [Drizzle Migrations](https://orm.drizzle.team/docs/migrations).
-
-After building, the `dist` directory will be created, containing the JavaScript version of the source code.
 
 #### 6. Deploy all application commands
 
