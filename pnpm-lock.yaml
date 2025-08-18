@@ -13,6 +13,9 @@ importers:
       "@sapphire/snowflake":
         specifier: ^3.5.5
         version: 3.5.5
+      chalk:
+        specifier: ^5.6.0
+        version: 5.6.0
       colorette:
         specifier: ^2.0.20
         version: 2.0.20
@@ -28,6 +31,9 @@ importers:
       fast-glob:
         specifier: ^3.3.3
         version: 3.3.3
+      humanize-duration:
+        specifier: ^3.33.0
+        version: 3.33.0
       pg:
         specifier: ^8.16.3
         version: 8.16.3
@@ -41,6 +47,9 @@ importers:
       "@eslint/js":
         specifier: ^9.30.1
         version: 9.33.0
+      "@types/humanize-duration":
+        specifier: ^3.27.4
+        version: 3.27.4
       "@types/pg":
         specifier: ^8.15.5
         version: 8.15.5
@@ -918,6 +927,12 @@ packages:
         integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==,
       }
 
+  "@types/humanize-duration@3.27.4":
+    resolution:
+      {
+        integrity: sha512-yaf7kan2Sq0goxpbcwTQ+8E9RP6HutFBPv74T/IA/ojcHKhuKVlk2YFYyHhWZeLvZPzzLE3aatuQB4h0iqyyUA==,
+      }
+
   "@types/json-schema@7.0.15":
     resolution:
       {
@@ -1175,10 +1190,10 @@ packages:
       }
     engines: { node: ">=10" }
 
-  chalk@5.5.0:
+  chalk@5.6.0:
     resolution:
       {
-        integrity: sha512-1tm8DTaJhPBG3bIkVeZt1iZM9GfSX2lzOeDVZH9R9ffRHpmHvxZ/QhgQH/aDTkswQVt+YHdXAdS/In/30OjCbg==,
+        integrity: sha512-46QrSQFyVSEyYAgQ22hQ+zDa60YHA4fBstHmtSApj1Y5vKtG27fWowW03jCk5KcbXEWPZUIR894aARCA/G1kfQ==,
       }
     engines: { node: ^12.17.0 || ^14.13 || >=16.0.0 }
 
@@ -1751,6 +1766,12 @@ packages:
         integrity: sha512-puUZAUKT5m8Zzvs72XWy3HtvVbTWljRE66cP60bxJzAqf2DgICo7lYTY2IHUmLnNpjYvw5bvmoHvPc0QO2a62w==,
       }
     engines: { node: ^16.14.0 || >=18.0.0 }
+
+  humanize-duration@3.33.0:
+    resolution:
+      {
+        integrity: sha512-vYJX7BSzn7EQ4SaP2lPYVy+icHDppB6k7myNeI3wrSRfwMS5+BHyGgzpHR0ptqJ2AQ6UuIKrclSg5ve6Ci4IAQ==,
+      }
 
   husky@9.1.7:
     resolution:
@@ -3136,6 +3157,8 @@ snapshots:
 
   "@types/estree@1.0.8": {}
 
+  "@types/humanize-duration@3.27.4": {}
+
   "@types/json-schema@7.0.15": {}
 
   "@types/node@24.2.1":
@@ -3323,7 +3346,7 @@ snapshots:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
 
-  chalk@5.5.0: {}
+  chalk@5.6.0: {}
 
   chokidar@4.0.3:
     dependencies:
@@ -3680,6 +3703,8 @@ snapshots:
       lru-cache: 10.4.3
     optional: true
 
+  humanize-duration@3.33.0: {}
+
   husky@9.1.7: {}
 
   ignore@5.3.2: {}
@@ -3746,7 +3771,7 @@ snapshots:
 
   lint-staged@16.1.5:
     dependencies:
-      chalk: 5.5.0
+      chalk: 5.6.0
       commander: 14.0.0
       debug: 4.4.1
       lilconfig: 3.1.3
