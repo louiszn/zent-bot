@@ -1,8 +1,8 @@
 name: Docker Image CI
 
 on:
-  push:
-    branches: ["stable"]
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -12,10 +12,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Create environment file
+        run: |
+          echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" > .env
+          echo "CLIENT_ID=${{ secrets.CLIENT_ID }}" >> .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "RBD_GUILD_ID=${{ secrets.RBD_GUILD_ID }}" >> .env
+          echo "RBD_CHANNEL_ID=${{ secrets.RBD_CHANNEL_ID }}" >> .env
+
       - name: Build and save Docker image
         run: |
-          docker build -t zent-bot:latest .
-          docker save zent-bot:latest | gzip > zent-bot.tar.gz
+          docker build -t zent-bot:${{ github.ref_name }} -t zent-bot:latest .
+          docker save zent-bot:${{ github.ref_name }} | gzip > zent-bot.tar.gz
 
       - name: Transfer Docker image to server
         uses: appleboy/scp-action@v0.1.7
@@ -24,7 +32,7 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "zent-bot.tar.gz,docker-compose.yml"
+          source: "zent-bot.tar.gz,docker-compose.yml,.env"
           target: "/tmp/zent-bot/"
 
       - name: Copy and deploy to server
@@ -38,14 +46,6 @@ jobs:
             cd /tmp/zent-bot
 
             docker load < zent-bot.tar.gz
-
-            echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" > .env
-            echo "CLIENT_ID=${{ secrets.CLIENT_ID }}" >> .env
-            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
-            echo "RBD_GUILD_ID=${{ secrets.RBD_GUILD_ID }}" >> .env
-            echo "RBD_CHANNEL_ID=${{ secrets.RBD_CHANNEL_ID }}" >> .env
-
-            docker compose -f docker-compose.yml down || true
 
             docker compose -f docker-compose.yml up -d
 
