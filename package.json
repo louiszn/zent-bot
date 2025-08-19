@@ -1,7 +1,7 @@
 {
 	"name": "zentbot",
 	"description": "Zent Bot is a utility bot, originally made with love for our friends' server, especially for role-playing.",
-	"version": "1.0.0-beta.1",
+	"version": "1.0.0-beta.3",
 	"private": true,
 	"license": "AGPL-3.0-only",
 	"author": "louiszn",
