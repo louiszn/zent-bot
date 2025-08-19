@@ -3,6 +3,7 @@ name: Docker Image CI
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -11,14 +12,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Create environment file
-        run: |
-          echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" > .env
-          echo "CLIENT_ID=${{ secrets.CLIENT_ID }}" >> .env
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
-          echo "RBD_GUILD_ID=${{ secrets.RBD_GUILD_ID }}" >> .env
-          echo "RBD_CHANNEL_ID=${{ secrets.RBD_CHANNEL_ID }}" >> .env
 
       - name: Build and save Docker image
         run: |
@@ -32,7 +25,7 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "zent-bot.tar.gz,docker-compose.yml,.env"
+          source: "zent-bot.tar.gz,docker-compose.yml"
           target: "/tmp/zent-bot/"
 
       - name: Copy and deploy to server
@@ -48,6 +41,12 @@ jobs:
             docker load < zent-bot.tar.gz
 
             docker compose -f docker-compose.yml down || true
+
+            echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" > .env
+            echo "CLIENT_ID=${{ secrets.CLIENT_ID }}" >> .env
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+            echo "RBD_GUILD_ID=${{ secrets.RBD_GUILD_ID }}" >> .env
+            echo "RBD_CHANNEL_ID=${{ secrets.RBD_CHANNEL_ID }}" >> .env
 
             docker compose -f docker-compose.yml up -d
 
