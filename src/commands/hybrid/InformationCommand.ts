@@ -13,7 +13,6 @@ import {
 } from "discord.js";
 
 import humanizeDuration from "humanize-duration";
-import chalk from "chalk";
 
 import { HybridCommand, useHybridCommand } from "../../base/command/Command.js";
 import type { HybridContext } from "../../base/command/HybridContext.js";
@@ -24,6 +23,7 @@ import { getRepoCommitsURL, parseRepoURL } from "../../utils/github.js";
 import CommitManager from "../../libs/CommitManager.js";
 import logger from "../../libs/logger.js";
 import pkg from "../../libs/pkg.js";
+import ansiColors from "ansi-colors";
 
 @useHybridCommand({
 	applicationCommandData: new SlashCommandBuilder()
@@ -87,10 +87,10 @@ export default class InformationCommand extends HybridCommand {
 					codeBlock(
 						"ansi",
 						[
-							`- ${chalk.yellow.bold("Uptime:")}  ${chalk.reset.white(humanizeDuration(Date.now() - client.readyAt.getTime(), { round: true }))}`,
-							`- ${chalk.yellow.bold("Servers:")} ${chalk.reset.white(client.guilds.cache.size.toLocaleString())}`,
-							`- ${chalk.yellow.bold("Version:")} ${chalk.reset.white(pkg.version)}`,
-							`- ${chalk.yellow.bold("Ping:")}    ${chalk.reset.white(`${client.ws.ping.toLocaleString()}ms`)}`,
+							`- ${ansiColors.yellow.bold("Uptime:")}  ${ansiColors.reset.white(humanizeDuration(Date.now() - client.readyAt.getTime(), { round: true }))}`,
+							`- ${ansiColors.yellow.bold("Servers:")} ${ansiColors.reset.white(client.guilds.cache.size.toLocaleString())}`,
+							`- ${ansiColors.yellow.bold("Version:")} ${ansiColors.reset.white(pkg.version ?? "unknown")}`,
+							`- ${ansiColors.yellow.bold("Ping:")}    ${ansiColors.reset.white(`${client.ws.ping.toLocaleString()}ms`)}`,
 						].join("\n"),
 					),
 				].join("\n"),
@@ -103,7 +103,7 @@ export default class InformationCommand extends HybridCommand {
 			const amount = 3;
 
 			const recentCommits = commits.first(amount).map((commit) => {
-				const message = truncate(commit.commit.message, 25);
+				const message = truncate(commit.commit.message.split("\n")[0], 25);
 				const commitId = inlineCode(commit.sha.slice(0, 7));
 				const date = new Date(commit.commit.author?.date || Date.now());
 
