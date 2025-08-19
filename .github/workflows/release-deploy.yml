@@ -15,8 +15,8 @@ jobs:
 
       - name: Build and save Docker image
         run: |
-          docker build -t zent-bot:${{ github.ref_name }} -t zent-bot:latest .
-          docker save zent-bot:${{ github.ref_name }} | gzip > zent-bot.tar.gz
+          docker build --no-cache -t zent-bot:latest .
+          docker save zent-bot:latest | gzip > zent-bot.tar.gz
 
       - name: Transfer Docker image to server
         uses: appleboy/scp-action@v0.1.7
