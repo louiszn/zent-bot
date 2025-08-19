@@ -47,6 +47,8 @@ jobs:
 
             docker load < zent-bot.tar.gz
 
+            docker compose -f docker-compose.yml down || true
+
             docker compose -f docker-compose.yml up -d
 
             rm zent-bot.tar.gz
