@@ -11,17 +11,19 @@ import {
 	time,
 	TimestampStyles,
 } from "discord.js";
-import { HybridCommand, useHybridCommand } from "../../base/command/Command.js";
-import type { HybridContext } from "../../base/command/HybridContext.js";
-import CommitManager from "../../libs/CommitManager.js";
-import { truncate } from "../../utils/string.js";
-
-import { getRepoCommitsURL, parseRepoURL } from "../../utils/github.js";
-import logger from "../../libs/logger.js";
-import pkg from "../../libs/pkg.js";
 
 import humanizeDuration from "humanize-duration";
 import chalk from "chalk";
+
+import { HybridCommand, useHybridCommand } from "../../base/command/Command.js";
+import type { HybridContext } from "../../base/command/HybridContext.js";
+
+import { truncate } from "../../utils/string.js";
+import { getRepoCommitsURL, parseRepoURL } from "../../utils/github.js";
+
+import CommitManager from "../../libs/CommitManager.js";
+import logger from "../../libs/logger.js";
+import pkg from "../../libs/pkg.js";
 
 @useHybridCommand({
 	applicationCommandData: new SlashCommandBuilder()
@@ -66,10 +68,12 @@ export default class InformationCommand extends HybridCommand {
 				new ButtonBuilder()
 					.setStyle(ButtonStyle.Link)
 					.setLabel("Server")
+					.setEmoji("<:discord:1407360328534200400>")
 					.setURL("https://discord.gg/pGnKbMfXke"),
 				new ButtonBuilder()
 					.setStyle(ButtonStyle.Link)
 					.setLabel("Repository")
+					.setEmoji("<:github:1407362139290603570>")
 					.setURL("https://github.com/louiszn/zent-bot"),
 			),
 		);
