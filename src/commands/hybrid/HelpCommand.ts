@@ -5,7 +5,7 @@ import type { HybridContext } from "../../base/command/HybridContext.js";
 @useHybridCommand({
 	applicationCommandData: new SlashCommandBuilder()
 		.setName("help")
-		.setDescription("")
+		.setDescription("Show all commands about me")
 		.setContexts(InteractionContextType.Guild),
 	prefixTriggers: ["help", "h"],
 })
