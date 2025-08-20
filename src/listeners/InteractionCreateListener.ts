@@ -10,7 +10,7 @@ import type {
 import { DiscordAPIError, Events, MessageFlags, RESTJSONErrorCodes } from "discord.js";
 
 import { Listener, useListener } from "../base/listener/Listener.js";
-import type { CommandWithSubcommandsConstructor } from "../base/command/Command.js";
+import type { HybridCommandConstructor, SlashCommandConstructor } from "../base/command/Command.js";
 import { HybridCommand } from "../base/command/Command.js";
 
 import logger from "../libs/logger.js";
@@ -89,16 +89,25 @@ export default class InteractionCreateListener extends Listener<Events.Interacti
 			return;
 		}
 
-		const { subcommands } = command.constructor as CommandWithSubcommandsConstructor;
-
 		try {
 			if (command instanceof HybridCommand) {
-				await command.execute(new SlashHybridContext(interaction), []);
+				const context = new SlashHybridContext(interaction);
+
+				await command.execute(context, []);
+
+				await (command.constructor as HybridCommandConstructor).subcommands.handle(
+					command,
+					context,
+					[],
+				);
 			} else {
 				await command.execute(interaction);
-			}
 
-			await subcommands.handleChatInput(command, interaction);
+				await (command.constructor as SlashCommandConstructor).subcommands.handle(
+					command,
+					interaction,
+				);
+			}
 		} catch (error) {
 			await this.handleRepliableInteractionError(interaction, error);
 		}

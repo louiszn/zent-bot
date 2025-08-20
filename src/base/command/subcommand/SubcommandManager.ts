@@ -1,22 +1,21 @@
-import { Collection } from "discord.js";
-
-import picomatch from "picomatch";
-
-import { HybridCommand, type BaseCommandWithSubcommands } from "../Command.js";
-
-import { PrefixHybridContext, SlashHybridContext } from "../HybridContext.js";
-
 import type { Awaitable, ChatInputCommandInteraction, Message } from "discord.js";
-import type { PrefixCommand, SlashCommand } from "../Command.js";
+import { Collection } from "discord.js";
+import type {
+	BaseCommandWithSubcommands,
+	HybridCommand,
+	PrefixCommand,
+	SlashCommand,
+} from "../Command.js";
+
 import type Subcommand from "./Subcommand.js";
+import picomatch from "picomatch";
+import type { HybridContext } from "../HybridContext.js";
 
-export default class SubcommandManager<C extends typeof BaseCommandWithSubcommands> {
-	private chatInputs = new Collection<string, Subcommand<InstanceType<C>>>();
-	private prefixes = new Collection<string, Subcommand<InstanceType<C>>>();
+export abstract class BaseSubcommandManager<Instance extends BaseCommandWithSubcommands> {
+	protected chatInputs = new Collection<string, Subcommand<Instance>>();
+	protected prefixes = new Collection<string, Subcommand<Instance>>();
 
-	public constructor(public commandClass: C) {}
-
-	public add(subcommand: Subcommand<InstanceType<C>>) {
+	public add(subcommand: Subcommand<Instance>) {
 		const { chatInput, prefixTriggers } = subcommand.identifier;
 
 		if (chatInput) {
@@ -28,86 +27,90 @@ export default class SubcommandManager<C extends typeof BaseCommandWithSubcomman
 		}
 	}
 
-	public getByArgs(args: string[]) {
-		return this.prefixes.find((_, trigger) => {
-			const depth = trigger.split(".").length + 1;
-			const pattern = args.slice(1, depth).join(".");
-
-			return picomatch.isMatch(pattern, trigger);
-		});
-	}
-
-	public execute(
-		subcommand: Subcommand<InstanceType<C>>,
-		instance: InstanceType<C>,
-		...args: Parameters<InstanceType<C>["execute"]>
-	): Awaitable<void> | undefined {
+	protected execute(
+		subcommand: Subcommand<Instance>,
+		instance: Instance,
+		...args: Parameters<Instance["execute"]>
+	): Awaitable<void> {
 		return subcommand.method.call(instance, ...args);
 	}
 
-	public async handleChatInput(
-		instance: InstanceType<C>,
+	public getFromInteraction(
 		interaction: ChatInputCommandInteraction<"cached">,
-	) {
-		if (!this.chatInputs.size) {
-			return;
-		}
-
+	): Subcommand<Instance> | null {
 		const name = interaction.options.getSubcommand(false);
 		const groupName = interaction.options.getSubcommandGroup(false);
 
 		if (!name) {
-			return;
+			return null;
 		}
 
 		const subcommandName = groupName ? `${groupName}.${name}` : name;
-		const subcommand = this.chatInputs.get(subcommandName);
-
-		if (!subcommand) {
-			return;
-		}
-
-		if (instance instanceof HybridCommand) {
-			await (this as unknown as SubcommandManager<typeof HybridCommand>).execute(
-				subcommand,
-				instance,
-				new SlashHybridContext(interaction),
-				[],
-			);
-		} else {
-			await (this as unknown as SubcommandManager<typeof SlashCommand>).execute(
-				subcommand,
-				instance,
-				interaction,
-			);
-		}
+		return this.chatInputs.get(subcommandName) || null;
 	}
 
-	public async handlePrefix(instance: InstanceType<C>, message: Message<true>, args: string[]) {
-		if (!this.prefixes.size) {
-			return;
-		}
+	public getFromArgs(args: string[]): Subcommand<Instance> | null {
+		return (
+			this.prefixes.find((_, trigger) => {
+				const depth = trigger.split(".").length + 1;
+				const pattern = args.slice(1, depth).join(".");
 
-		const subcommand = this.getByArgs(args);
+				return picomatch.isMatch(pattern, trigger);
+			}) || null
+		);
+	}
+
+	public abstract handle(
+		instance: Instance,
+		...args: Parameters<Instance["execute"]>
+	): Promise<void>;
+}
+
+export class HybridSubcommandManager extends BaseSubcommandManager<HybridCommand> {
+	public override async handle(
+		instance: HybridCommand,
+		context: HybridContext,
+		args: string[],
+	): Promise<void> {
+		const subcommand = context.isInteraction()
+			? this.getFromInteraction(context.source)
+			: this.getFromArgs(args);
 
 		if (!subcommand) {
 			return;
 		}
 
-		if (instance instanceof HybridCommand) {
-			await (this as unknown as SubcommandManager<typeof HybridCommand>).execute(
-				subcommand,
-				instance,
-				new PrefixHybridContext(message),
-				args,
-			);
-		} else {
-			await (this as unknown as SubcommandManager<typeof PrefixCommand>).execute(
-				subcommand,
-				instance,
-				message,
-				args,
-			);
+		await this.execute(subcommand, instance, context, args);
+	}
+}
+
+export class SlashSubcommandManager extends BaseSubcommandManager<SlashCommand> {
+	public override async handle(
+		instance: SlashCommand,
+		interaction: ChatInputCommandInteraction<"cached">,
+	): Promise<void> {
+		const subcommand = this.getFromInteraction(interaction);
+
+		if (!subcommand) {
+			return;
 		}
+
+		await this.execute(subcommand, instance, interaction);
+	}
+}
+
+export class PrefixSubcommandManager extends BaseSubcommandManager<PrefixCommand> {
+	public override async handle(
+		instance: PrefixCommand,
+		message: Message<true>,
+		args: string[],
+	): Promise<void> {
+		const subcommand = this.getFromArgs(args);
+
+		if (!subcommand) {
+			return;
+		}
+
+		await this.execute(subcommand, instance, message, args);
 	}
 }

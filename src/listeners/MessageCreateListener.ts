@@ -2,7 +2,10 @@ import type { Message } from "discord.js";
 import { Events } from "discord.js";
 import { Listener, useListener } from "../base/listener/Listener.js";
 
-import type { CommandWithSubcommandsConstructor } from "../base/command/Command.js";
+import type {
+	HybridCommandConstructor,
+	PrefixCommandConstructor,
+} from "../base/command/Command.js";
 import { HybridCommand } from "../base/command/Command.js";
 import logger from "../libs/logger.js";
 import { PrefixHybridContext } from "../base/command/HybridContext.js";
@@ -33,16 +36,26 @@ export default class MessageCreateListener extends Listener<Events.MessageCreate
 			return;
 		}
 
-		const { subcommands } = command.constructor as CommandWithSubcommandsConstructor;
-
 		try {
 			if (command instanceof HybridCommand) {
-				await command.execute(new PrefixHybridContext(message), args);
+				const context = new PrefixHybridContext(message);
+
+				await command.execute(context, args);
+
+				await (command.constructor as HybridCommandConstructor).subcommands.handle(
+					command,
+					context,
+					args,
+				);
 			} else {
 				await command.execute(message, args);
-			}
 
-			await subcommands.handlePrefix(command, message, args);
+				await (command.constructor as PrefixCommandConstructor).subcommands.handle(
+					command,
+					message,
+					args,
+				);
+			}
 		} catch (error) {
 			logger.error(`An error occurred while executing command '${commandName}':`, error);
 		}
