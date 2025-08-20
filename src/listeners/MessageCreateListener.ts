@@ -9,6 +9,7 @@ import type {
 import { HybridCommand } from "../base/command/Command.js";
 import logger from "../libs/logger.js";
 import { PrefixHybridContext } from "../base/command/HybridContext.js";
+import GuildManager from "../managers/GuildManager.js";
 
 const PREFIX = "_";
 
@@ -22,11 +23,19 @@ export default class MessageCreateListener extends Listener<Events.MessageCreate
 			return;
 		}
 
-		if (!message.content.toLowerCase().startsWith(PREFIX.toLowerCase())) {
+		const guildData = await GuildManager.get(message.guild.id);
+
+		const lowerContent = message.content.toLowerCase();
+
+		const prefixes = [client.user.toString(), guildData?.prefix || PREFIX];
+
+		const usedPrefix = prefixes.find((prefix) => lowerContent.startsWith(prefix.toLowerCase()));
+
+		if (!usedPrefix) {
 			return;
 		}
 
-		const args = message.content.slice(PREFIX.length).trim().split(/\s+/g);
+		const args = message.content.slice(usedPrefix.length).trim().split(/\s+/g);
 
 		const commandName = args[0].toLowerCase();
 
