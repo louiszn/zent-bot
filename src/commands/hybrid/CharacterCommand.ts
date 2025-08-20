@@ -31,9 +31,9 @@ import { extractId, sanitize } from "../../utils/string.js";
 import { isImageUrl } from "../../utils/url.js";
 import { Paginator } from "../../libs/Paginator.js";
 
-import CharacterManager from "../../libs/CharacterManager.js";
+import CharacterManager from "../../managers/CharacterManager.js";
 
-import type { Character } from "../../libs/CharacterManager.js";
+import type { Character } from "../../managers/CharacterManager.js";
 import logger from "../../libs/logger.js";
 
 const getCharacterOption = (option: SlashCommandStringOption) =>

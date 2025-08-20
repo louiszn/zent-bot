@@ -6,7 +6,7 @@ import db from "../../database/index.js";
 import { eq } from "drizzle-orm";
 
 import { characterMessagesTable } from "../../database/schema/character.js";
-import CharacterManager from "../../libs/CharacterManager.js";
+import CharacterManager from "../../managers/CharacterManager.js";
 
 @usePrefixCommand({
 	triggers: ["edit"],

@@ -20,7 +20,7 @@ import type { HybridContext } from "../../base/command/HybridContext.js";
 import { truncate } from "../../utils/string.js";
 import { getRepoCommitsURL, parseRepoURL } from "../../utils/github.js";
 
-import CommitManager from "../../libs/CommitManager.js";
+import CommitManager from "../../managers/CommitManager.js";
 import logger from "../../libs/logger.js";
 import pkg from "../../libs/pkg.js";
 import ansiColors from "ansi-colors";
