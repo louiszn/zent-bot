@@ -5,7 +5,7 @@ import { and, eq, type InferInsertModel, type InferSelectModel } from "drizzle-o
 
 import db from "../database/index.js";
 import { characterMessagesTable, charactersTable } from "../database/schema/character.js";
-import snowflake from "./snowflake.js";
+import snowflake from "../libs/snowflake.js";
 
 export const MAX_MESSAGE_CONTENT_LENGTH = 1_700 as const;
 export const MAX_REVIEW_MESSAGE_CONTENT_LENGTH = 50 as const;

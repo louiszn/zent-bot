@@ -2,9 +2,9 @@ import type { RestEndpointMethodTypes } from "@octokit/rest";
 import { Octokit } from "@octokit/rest";
 
 import { Collection } from "discord.js";
-import logger from "./logger.js";
+import logger from "../libs/logger.js";
 
-import pkg from "./pkg.js";
+import pkg from "../libs/pkg.js";
 import { parseRepoURL } from "../utils/github.js";
 
 const octokit = new Octokit();

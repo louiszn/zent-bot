@@ -1,6 +1,8 @@
 import type { RESTPostAPIApplicationCommandsJSONBody } from "discord.js";
 import { Collection, REST, Routes } from "discord.js";
 
+import "reflect-metadata";
+
 import config from "./config.js";
 
 import CommandRegistry from "./base/command/CommandRegistry.js";

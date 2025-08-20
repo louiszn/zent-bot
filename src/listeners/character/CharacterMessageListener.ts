@@ -5,7 +5,7 @@ import { Listener, useListener } from "../../base/listener/Listener.js";
 import db from "../../database/index.js";
 
 import logger from "../../libs/logger.js";
-import CharacterManager, { MAX_MESSAGE_CONTENT_LENGTH } from "../../libs/CharacterManager.js";
+import CharacterManager, { MAX_MESSAGE_CONTENT_LENGTH } from "../../managers/CharacterManager.js";
 import { characterMessagesTable } from "../../database/schema/character.js";
 
 @useListener(Events.MessageCreate)

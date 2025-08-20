@@ -1,7 +1,7 @@
 import type { GuildMember } from "discord.js";
 import { Events } from "discord.js";
 import { Listener, useListener } from "../../base/listener/Listener.js";
-import CharacterManager from "../../libs/CharacterManager.js";
+import CharacterManager from "../../managers/CharacterManager.js";
 
 @useListener(Events.GuildMemberAdd)
 export default class GuildMemberAddListener extends Listener<Events.GuildMemberAdd> {

@@ -10,7 +10,7 @@ import { ContextMenuCommand, useContextMenuCommand } from "../../base/command/Co
 import db from "../../database/index.js";
 import { characterMessagesTable } from "../../database/schema/character.js";
 import { eq } from "drizzle-orm";
-import CharacterManager from "../../libs/CharacterManager.js";
+import CharacterManager from "../../managers/CharacterManager.js";
 
 @useContextMenuCommand({
 	data: new ContextMenuCommandBuilder()
