@@ -8,6 +8,7 @@ import type {
 	SlashCommandSubcommandsOnlyBuilder,
 	ChatInputCommandInteraction,
 	Message,
+	SlashCommandOptionsOnlyBuilder,
 } from "discord.js";
 
 import CommandRegistry from "./CommandRegistry.js";
@@ -104,7 +105,7 @@ export interface UsePrefixCommandOptions extends BaseUseCommandOptions {
 }
 
 export interface UseSlashCommandOptions extends BaseUseCommandOptions {
-	data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
+	data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder | SlashCommandOptionsOnlyBuilder;
 }
 
 export interface UseContextMenuCommandOptions extends BaseUseCommandOptions {
@@ -112,7 +113,10 @@ export interface UseContextMenuCommandOptions extends BaseUseCommandOptions {
 }
 
 export interface UseHybridCommandOptions extends BaseUseCommandOptions {
-	applicationCommandData: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
+	applicationCommandData:
+		| SlashCommandBuilder
+		| SlashCommandSubcommandsOnlyBuilder
+		| SlashCommandOptionsOnlyBuilder;
 	prefixTriggers: string[];
 }
 
