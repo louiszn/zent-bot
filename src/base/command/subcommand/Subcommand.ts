@@ -1,4 +1,4 @@
-import type { BaseCommandWithSubcommands, CommandWithSubcommandsConstructor } from "../Command.js";
+import type { BaseCommandWithSubcommands } from "../Command.js";
 
 export interface ManualSubcommandIdentifier {
 	chatInput?: string;
@@ -12,6 +12,24 @@ export default class Subcommand<T extends BaseCommandWithSubcommands> {
 		public identifier: ManualSubcommandIdentifier,
 		public method: T["execute"],
 	) {}
+}
+
+const SUBCOMMANDS_METADATA_KEY = Symbol();
+
+export function getSubcommandsMetadata<
+	Constructor extends typeof BaseCommandWithSubcommands,
+	Instance extends InstanceType<Constructor>,
+>(constructor: Constructor) {
+	return (
+		(Reflect.getMetadata(SUBCOMMANDS_METADATA_KEY, constructor) as Subcommand<Instance>[]) || []
+	);
+}
+
+export function setSubcommandMetadata<
+	Constructor extends typeof BaseCommandWithSubcommands,
+	Instance extends InstanceType<Constructor>,
+>(constructor: Constructor, subcommands: Subcommand<Instance>[]) {
+	return Reflect.defineMetadata(SUBCOMMANDS_METADATA_KEY, subcommands, constructor);
 }
 
 export function useSubcommand(identifier: SubcommandIdentifier) {
@@ -33,8 +51,14 @@ export function useSubcommand(identifier: SubcommandIdentifier) {
 			};
 		}
 
+		const constructor = target.constructor as typeof BaseCommandWithSubcommands;
+
 		const subcommand = new Subcommand<T>(identifier, executeFn);
 
-		(target.constructor as CommandWithSubcommandsConstructor).subcommands.add(subcommand);
+		const subcommands = getSubcommandsMetadata(constructor);
+
+		subcommands.push(subcommand);
+
+		setSubcommandMetadata(constructor, subcommands);
 	};
 }
