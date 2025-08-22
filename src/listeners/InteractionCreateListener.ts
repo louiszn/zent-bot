@@ -15,6 +15,7 @@ import { HybridCommand } from "../base/command/Command.js";
 
 import logger from "../libs/logger.js";
 import { SlashHybridContext } from "../base/command/HybridContext.js";
+import { DummyArgumentResolver } from "../base/command/argument/ArgumentResolver.js";
 
 @useListener(Events.InteractionCreate)
 export default class InteractionCreateListener extends Listener<Events.InteractionCreate> {
@@ -93,12 +94,14 @@ export default class InteractionCreateListener extends Listener<Events.Interacti
 			if (command instanceof HybridCommand) {
 				const context = new SlashHybridContext(interaction);
 
-				await command.execute(context, []);
+				const dummyArgs = new DummyArgumentResolver();
+
+				await command.execute(context, dummyArgs);
 
 				await (command.constructor as HybridCommandConstructor).subcommands.handle(
 					command,
 					context,
-					[],
+					dummyArgs,
 				);
 			} else {
 				await command.execute(interaction);

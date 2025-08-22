@@ -2,6 +2,9 @@ import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import { HybridCommand, useHybridCommand } from "../../base/command/Command.js";
 import type { HybridContext } from "../../base/command/HybridContext.js";
 import GuildManager from "../../managers/GuildManager.js";
+import { useArguments } from "../../base/command/argument/ArgumentManager.js";
+import { ArgumentType } from "../../base/command/argument/enums.js";
+import type ArgumentResolver from "../../base/command/argument/ArgumentResolver.js";
 
 @useHybridCommand({
 	applicationCommandData: new SlashCommandBuilder()
@@ -13,10 +16,13 @@ import GuildManager from "../../managers/GuildManager.js";
 	prefixTriggers: ["prefix"],
 })
 export default class PrefixCommand extends HybridCommand {
-	public override async execute(context: HybridContext, args: string[]): Promise<void> {
+	@useArguments((arg) =>
+		arg.setName("new-prefix").setType(ArgumentType.String).setMaxLength(10).setRequired(false),
+	)
+	public override async execute(context: HybridContext, args: ArgumentResolver): Promise<void> {
 		const prefixToSet = context.isInteraction()
 			? context.source.options.getString("new-prefix")
-			: args[1];
+			: args.getString("new-prefix");
 
 		if (prefixToSet) {
 			const guild = await GuildManager.update(context.guild.id, {

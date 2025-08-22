@@ -10,6 +10,7 @@ import { HybridCommand } from "../base/command/Command.js";
 import logger from "../libs/logger.js";
 import { PrefixHybridContext } from "../base/command/HybridContext.js";
 import GuildManager from "../managers/GuildManager.js";
+import ArgumentResolver from "../base/command/argument/ArgumentResolver.js";
 
 const PREFIX = "_";
 
@@ -35,11 +36,11 @@ export default class MessageCreateListener extends Listener<Events.MessageCreate
 			return;
 		}
 
-		const args = message.content.slice(usedPrefix.length).trim().split(/\s+/g);
+		console.log("hello world");
 
-		const commandName = args[0].toLowerCase();
+		const args = ArgumentResolver.create(message, usedPrefix);
 
-		const command = managers.commands.prefixes.get(commandName);
+		const command = managers.commands.prefixes.get(args.commandName);
 
 		if (!command) {
 			return;
@@ -49,7 +50,8 @@ export default class MessageCreateListener extends Listener<Events.MessageCreate
 			if (command instanceof HybridCommand) {
 				const context = new PrefixHybridContext(message);
 
-				await command.execute(context, args);
+				// eslint-disable-next-line @typescript-eslint/unbound-method
+				await command.execute(context, await args.resolveMethod(command.execute));
 
 				await (command.constructor as HybridCommandConstructor).subcommands.handle(
 					command,
@@ -57,7 +59,8 @@ export default class MessageCreateListener extends Listener<Events.MessageCreate
 					args,
 				);
 			} else {
-				await command.execute(message, args);
+				// eslint-disable-next-line @typescript-eslint/unbound-method
+				await command.execute(message, await args.resolveMethod(command.execute));
 
 				await (command.constructor as PrefixCommandConstructor).subcommands.handle(
 					command,
@@ -66,7 +69,7 @@ export default class MessageCreateListener extends Listener<Events.MessageCreate
 				);
 			}
 		} catch (error) {
-			logger.error(`An error occurred while executing command '${commandName}':`, error);
+			logger.error(`An error occurred while executing command '${args.commandName}':`, error);
 		}
 	}
 }

@@ -10,6 +10,7 @@ import type {
 import type Subcommand from "./Subcommand.js";
 import picomatch from "picomatch";
 import type { HybridContext } from "../HybridContext.js";
+import type ArgumentResolver from "../argument/ArgumentResolver.js";
 
 export abstract class BaseSubcommandManager<Instance extends BaseCommandWithSubcommands> {
 	protected chatInputs = new Collection<string, Subcommand<Instance>>();
@@ -49,11 +50,11 @@ export abstract class BaseSubcommandManager<Instance extends BaseCommandWithSubc
 		return this.chatInputs.get(subcommandName) || null;
 	}
 
-	public getFromArgs(args: string[]): Subcommand<Instance> | null {
+	public getFromArgs(args: ArgumentResolver): Subcommand<Instance> | null {
 		return (
 			this.prefixes.find((_, trigger) => {
 				const depth = trigger.split(".").length + 1;
-				const pattern = args.slice(1, depth).join(".");
+				const pattern = args.values.slice(1, depth).join(".");
 
 				return picomatch.isMatch(pattern, trigger);
 			}) || null
@@ -70,7 +71,7 @@ export class HybridSubcommandManager extends BaseSubcommandManager<HybridCommand
 	public override async handle(
 		instance: HybridCommand,
 		context: HybridContext,
-		args: string[],
+		args: ArgumentResolver,
 	): Promise<void> {
 		const subcommand = context.isInteraction()
 			? this.getFromInteraction(context.source)
@@ -80,7 +81,12 @@ export class HybridSubcommandManager extends BaseSubcommandManager<HybridCommand
 			return;
 		}
 
-		await this.execute(subcommand, instance, context, args);
+		await this.execute(
+			subcommand,
+			instance,
+			context,
+			context.isInteraction() ? args : await args.resolveMethod(subcommand.method),
+		);
 	}
 }
 
@@ -103,14 +109,21 @@ export class PrefixSubcommandManager extends BaseSubcommandManager<PrefixCommand
 	public override async handle(
 		instance: PrefixCommand,
 		message: Message<true>,
-		args: string[],
+		args: ArgumentResolver,
 	): Promise<void> {
 		const subcommand = this.getFromArgs(args);
+
+		console.log(subcommand);
 
 		if (!subcommand) {
 			return;
 		}
 
-		await this.execute(subcommand, instance, message, args);
+		await this.execute(
+			subcommand,
+			instance,
+			message,
+			await args.resolveMethod(subcommand.method, true),
+		);
 	}
 }

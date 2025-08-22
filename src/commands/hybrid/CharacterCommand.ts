@@ -6,7 +6,6 @@ import type {
 	ChatInputCommandInteraction,
 	MessageCreateOptions,
 	SlashCommandStringOption,
-	User,
 } from "discord.js";
 
 import {
@@ -26,7 +25,7 @@ import { useSubcommand } from "../../base/command/subcommand/Subcommand.js";
 
 import type { HybridContext } from "../../base/command/HybridContext.js";
 
-import { extractId, sanitize } from "../../utils/string.js";
+import { sanitize } from "../../utils/string.js";
 
 import { isImageUrl } from "../../utils/url.js";
 import { Paginator } from "../../libs/Paginator.js";
@@ -35,6 +34,9 @@ import CharacterManager from "../../managers/CharacterManager.js";
 
 import type { Character } from "../../managers/CharacterManager.js";
 import logger from "../../libs/logger.js";
+import { useArguments } from "../../base/command/argument/ArgumentManager.js";
+import { ArgumentType, UserArgumentAcceptanceType } from "../../base/command/argument/enums.js";
+import type ArgumentResolver from "../../base/command/argument/ArgumentResolver.js";
 
 const getCharacterOption = (option: SlashCommandStringOption) =>
 	option
@@ -147,7 +149,7 @@ const getCharacterOption = (option: SlashCommandStringOption) =>
 })
 export default class CharacterCommand extends HybridCommand {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	public override execute(context: HybridContext, args: string[]): Awaitable<void> {}
+	public override execute(context: HybridContext, args: ArgumentResolver): Awaitable<void> {}
 
 	public override async autocomplete(interaction: AutocompleteInteraction) {
 		const focusedOption = interaction.options.getFocused(true);
@@ -185,13 +187,14 @@ export default class CharacterCommand extends HybridCommand {
 	}
 
 	@useSubcommand("create")
-	protected async onCreate(context: HybridContext, args: string[]) {
+	@useArguments((arg) => arg.setName("tag").setType(ArgumentType.String).setRequired(true))
+	protected async onCreate(context: HybridContext, args: ArgumentResolver) {
 		let tag: string;
 
 		if (context.isInteraction()) {
 			tag = context.source.options.getString("tag", true);
 		} else {
-			tag = args[2] || "";
+			tag = args.getString("tag", true);
 		}
 
 		tag = sanitize(tag).trim().toLowerCase();
@@ -226,7 +229,7 @@ export default class CharacterCommand extends HybridCommand {
 		userId: string,
 		target: {
 			onInteraction: (interaction: ChatInputCommandInteraction<"cached">) => string;
-			onMessage: () => string | undefined;
+			onMessage: () => string;
 		},
 	): Promise<Character | null> {
 		const characterManager = CharacterManager.create(userId);
@@ -255,40 +258,20 @@ export default class CharacterCommand extends HybridCommand {
 		return character;
 	}
 
-	private async getUser(
-		context: HybridContext,
-		target: {
-			onInteraction: (interaction: ChatInputCommandInteraction<"cached">) => User | null;
-			onMessage: () => string | undefined;
-		},
-	) {
-		let user: User | null = context.user;
-
-		if (context.isInteraction()) {
-			user = target.onInteraction(context.source) || user;
-		} else {
-			const userId = extractId(target.onMessage() || "");
-
-			if (userId) {
-				user = await this.client.users.fetch(userId).catch(() => null);
-			}
-		}
-
-		if (!user) {
-			await context.send("Couldn't find that user");
-			return null;
-		}
-
-		return user;
-	}
-
 	@useSubcommand("delete")
-	protected async onDelete(context: HybridContext, args: string[]) {
+	@useArguments((arg) =>
+		arg
+			.setName("tag")
+			.setDescription("Specify character tag to delete")
+			.setType(ArgumentType.String)
+			.setRequired(true),
+	)
+	protected async onDelete(context: HybridContext, args: ArgumentResolver) {
 		const characterManager = CharacterManager.create(context.user.id);
 
 		const character = await this.getCharacter(context, context.user.id, {
 			onInteraction: (interaction) => interaction.options.getString("character", true),
-			onMessage: () => args[2],
+			onMessage: () => args.getString("tag", true),
 		});
 
 		if (!character) {
@@ -366,14 +349,19 @@ export default class CharacterCommand extends HybridCommand {
 	}
 
 	@useSubcommand("list")
-	protected async onList(context: HybridContext, args: string[]) {
-		const user = await this.getUser(context, {
-			onInteraction: (interaction) => interaction.options.getUser("user"),
-			onMessage: () => args[2],
-		});
+	@useArguments((arg) =>
+		arg
+			.setName("user")
+			.setDescription("Specify a user to list their characters")
+			.setType(ArgumentType.User),
+	)
+	protected async onList(context: HybridContext, args: ArgumentResolver) {
+		let user = context.isInteraction()
+			? context.source.options.getUser("user")
+			: args.getUser("user");
 
 		if (!user) {
-			return;
+			user = context.user;
 		}
 
 		const characterManager = CharacterManager.create(user.id);
@@ -424,19 +412,32 @@ export default class CharacterCommand extends HybridCommand {
 	}
 
 	@useSubcommand("info")
-	protected async onInfo(context: HybridContext, args: string[]) {
-		const user = await this.getUser(context, {
-			onInteraction: (interaction) => interaction.options.getUser("user"),
-			onMessage: () => (args.length > 3 ? args[2] : undefined),
-		});
+	@useArguments(
+		(argument) =>
+			argument
+				.setName("user")
+				.setDescription("Specify a user to get their character information.")
+				.setType(ArgumentType.User)
+				.setAcceptance(UserArgumentAcceptanceType.User),
+		(argument) =>
+			argument
+				.setName("tag")
+				.setDescription("Specify character tag to get character information.")
+				.setType(ArgumentType.String)
+				.setRequired(true),
+	)
+	protected async onInfo(context: HybridContext, args: ArgumentResolver) {
+		let user = context.isInteraction()
+			? context.source.options.getUser("user")
+			: args.getUser("user");
 
 		if (!user) {
-			return;
+			user = context.user;
 		}
 
 		const character = await this.getCharacter(context, user.id, {
 			onInteraction: (interaction) => interaction.options.getString("character", true),
-			onMessage: () => (args.length > 3 ? args[3] : args[2]),
+			onMessage: () => args.getString("tag", true),
 		});
 
 		if (!character) {
@@ -452,28 +453,36 @@ export default class CharacterCommand extends HybridCommand {
 		chatInput: "edit.name",
 		prefixTriggers: ["edit.*.name"],
 	})
-	protected async onNameEdit(context: HybridContext, args: string[]) {
+	@useArguments(
+		(argument) =>
+			argument
+				.setName("tag")
+				.setDescription("Specify character tag to edit its name.")
+				.setType(ArgumentType.String)
+				.setRequired(true),
+		null,
+		(argument) =>
+			argument
+				.setName("name")
+				.setDescription("Specify a new name to set for the character")
+				.setRequired(true)
+				.setType(ArgumentType.String)
+				.setTuple(true)
+				.setMaxLength(50),
+	)
+	protected async onNameEdit(context: HybridContext, args: ArgumentResolver) {
 		const character = await this.getCharacter(context, context.user.id, {
 			onInteraction: (interaction) => interaction.options.getString("character", true),
-			onMessage: () => args[2],
+			onMessage: () => args.getString("tag", true),
 		});
 
 		if (!character) {
 			return;
 		}
 
-		let name: string;
-
-		if (context.isInteraction()) {
-			name = context.source.options.getString("name", true);
-		} else {
-			name = args.slice(4).join(" ");
-
-			if (!name) {
-				await context.send("Invalid syntax used: _char edit [tag] name [...name]");
-				return;
-			}
-		}
+		const name = context.isInteraction()
+			? context.source.options.getString("name", true)
+			: args.getStrings("name").join(" ");
 
 		const characterManager = CharacterManager.create(context.user.id);
 
@@ -488,10 +497,25 @@ export default class CharacterCommand extends HybridCommand {
 		chatInput: "edit.tag",
 		prefixTriggers: ["edit.*.tag"],
 	})
-	protected async onTagEdit(context: HybridContext, args: string[]) {
+	@useArguments(
+		(argument) =>
+			argument
+				.setName("tag")
+				.setDescription("Specify character tag to edit its name.")
+				.setType(ArgumentType.String)
+				.setRequired(true),
+		null,
+		(argument) =>
+			argument
+				.setName("new-tag")
+				.setDescription("Specify a new tag to set for the character")
+				.setRequired(true)
+				.setType(ArgumentType.String),
+	)
+	protected async onTagEdit(context: HybridContext, args: ArgumentResolver) {
 		const character = await this.getCharacter(context, context.user.id, {
 			onInteraction: (interaction) => interaction.options.getString("character", true),
-			onMessage: () => args[2],
+			onMessage: () => args.getString("tag", true),
 		});
 
 		if (!character) {
@@ -503,12 +527,7 @@ export default class CharacterCommand extends HybridCommand {
 		if (context.isInteraction()) {
 			newTag = context.source.options.getString("tag", true);
 		} else {
-			newTag = sanitize(args[4] || "").toLowerCase();
-
-			if (!newTag) {
-				await context.send("Invalid syntax used: _char edit [tag] tag [new tag]");
-				return;
-			}
+			newTag = sanitize(args.getString("new-tag", true)).toLowerCase();
 		}
 
 		const characterManager = CharacterManager.create(context.user.id);
@@ -530,10 +549,24 @@ export default class CharacterCommand extends HybridCommand {
 		chatInput: "edit.avatar",
 		prefixTriggers: ["edit.*.avatar"],
 	})
-	protected async onAvatarEdit(context: HybridContext, args: string[]) {
+	@useArguments(
+		(argument) =>
+			argument
+				.setName("tag")
+				.setDescription("Specify character tag to edit its name.")
+				.setType(ArgumentType.String)
+				.setRequired(true),
+		null,
+		(argument) =>
+			argument
+				.setName("url")
+				.setDescription("Specify a new image url to set for the character")
+				.setType(ArgumentType.String),
+	)
+	protected async onAvatarEdit(context: HybridContext, args: ArgumentResolver) {
 		const character = await this.getCharacter(context, context.user.id, {
 			onInteraction: (interaction) => interaction.options.getString("character", true),
-			onMessage: () => args[2],
+			onMessage: () => args.getString("tag", true),
 		});
 
 		if (!character) {
@@ -550,11 +583,12 @@ export default class CharacterCommand extends HybridCommand {
 			}
 		} else {
 			const attachment = context.source.attachments.first();
+			const url = args.getString("url");
 
 			if (attachment?.contentType?.startsWith("image/")) {
 				avatarURL = attachment.url;
-			} else if (await isImageUrl(args[4])) {
-				avatarURL = args[4];
+			} else if (url && (await isImageUrl(url))) {
+				avatarURL = url;
 			} else {
 				await context.send("You must specific an image to set.");
 				return;
@@ -606,10 +640,24 @@ export default class CharacterCommand extends HybridCommand {
 		chatInput: "edit.prefix",
 		prefixTriggers: ["edit.*.prefix"],
 	})
-	protected async onPrefixEdit(context: HybridContext, args: string[]) {
+	@useArguments(
+		(argument) =>
+			argument
+				.setName("tag")
+				.setDescription("Specify character tag to edit its name.")
+				.setType(ArgumentType.String)
+				.setRequired(true),
+		null,
+		(argument) =>
+			argument
+				.setName("prefix")
+				.setDescription("Specify a new prefix to set for the character")
+				.setType(ArgumentType.String),
+	)
+	protected async onPrefixEdit(context: HybridContext, args: ArgumentResolver) {
 		const character = await this.getCharacter(context, context.user.id, {
 			onInteraction: (interaction) => interaction.options.getString("character", true),
-			onMessage: () => args[2],
+			onMessage: () => args.getString("tag", true),
 		});
 
 		if (!character) {
@@ -621,7 +669,7 @@ export default class CharacterCommand extends HybridCommand {
 		if (context.isInteraction()) {
 			prefix = context.source.options.getString("prefix", true).split(/\+s/g)[0];
 		} else {
-			prefix = (args[4] || "").toLowerCase();
+			prefix = args.getString("prefix", true).toLowerCase();
 
 			if (!prefix) {
 				await context.send("Invalid syntax used: _char edit [tag] prefix [prefix]");

@@ -5,16 +5,27 @@ import { extractId } from "../../utils/string.js";
 import db from "../../database/index.js";
 import { eq } from "drizzle-orm";
 import { characterMessagesTable } from "../../database/schema/character.js";
+import type ArgumentResolver from "../../base/command/argument/ArgumentResolver.js";
+import { useArguments } from "../../base/command/argument/ArgumentManager.js";
+import { ArgumentType } from "../../base/command/argument/enums.js";
 
 @usePrefixCommand({
 	triggers: ["delete", "del"],
 })
 export default class DeleteCommand extends PrefixCommand {
-	public async execute(message: Message<true>, args: string[]): Promise<void> {
+	@useArguments((arg) =>
+		arg
+			.setName("message")
+			.setDescription("Message link or ID to delete")
+			.setType(ArgumentType.String),
+	)
+	public async execute(message: Message<true>, args: ArgumentResolver): Promise<void> {
 		let targetMessage: Message<true> | undefined;
 
-		if (args[1]) {
-			const messageId = extractId(args[1]);
+		const rawMessageId = args.getString("message");
+
+		if (rawMessageId) {
+			const messageId = extractId(rawMessageId);
 
 			if (messageId) {
 				try {

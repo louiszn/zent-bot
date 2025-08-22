@@ -19,11 +19,13 @@ import {
 	SlashSubcommandManager,
 } from "./subcommand/SubcommandManager.js";
 
+import { getSubcommandsMetadata } from "./subcommand/Subcommand.js";
+
 import type ZentBot from "../ZentBot.js";
 
 import type { BaseSubcommandManager } from "./subcommand/SubcommandManager.js";
 import type { HybridContext } from "./HybridContext.js";
-import { getSubcommandsMetadata } from "./subcommand/Subcommand.js";
+import type ArgumentResolver from "./argument/ArgumentResolver.js";
 
 export abstract class BaseCommand {
 	public static guildIds: string[];
@@ -42,7 +44,7 @@ export abstract class PrefixCommand extends BaseCommandWithSubcommands {
 
 	public static triggers: string[];
 
-	abstract override execute(message: Message<true>, args: string[]): Awaitable<void>;
+	abstract override execute(message: Message<true>, args: ArgumentResolver): Awaitable<void>;
 }
 
 export abstract class SlashCommand extends BaseCommandWithSubcommands {
@@ -60,7 +62,7 @@ export abstract class HybridCommand extends BaseCommandWithSubcommands {
 	public static applicationCommandData: RESTPostAPIApplicationCommandsJSONBody;
 	public static prefixTriggers: string[];
 
-	abstract override execute(context: HybridContext, args: string[]): Awaitable<void>;
+	abstract override execute(context: HybridContext, args: ArgumentResolver): Awaitable<void>;
 	autocomplete?(interaction: AutocompleteInteraction<"cached">): Awaitable<void>;
 }
 

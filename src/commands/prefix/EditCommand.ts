@@ -7,24 +7,41 @@ import { eq } from "drizzle-orm";
 
 import { characterMessagesTable } from "../../database/schema/character.js";
 import CharacterManager from "../../managers/CharacterManager.js";
+import { useArguments } from "../../base/command/argument/ArgumentManager.js";
+import type ArgumentResolver from "../../base/command/argument/ArgumentResolver.js";
+import { ArgumentType } from "../../base/command/argument/enums.js";
 
 @usePrefixCommand({
 	triggers: ["edit"],
 })
 export default class DeleteCommand extends PrefixCommand {
-	public async execute(message: Message<true>, args: string[]): Promise<void> {
+	@useArguments(
+		(arg) =>
+			arg
+				.setName("message")
+				.setDescription("Message link or ID to delete")
+				.setType(ArgumentType.String),
+		(arg) =>
+			arg
+				.setName("content")
+				.setDescription("Content to edit")
+				.setType(ArgumentType.String)
+				.setRequired(true)
+				.setTuple(true),
+	)
+	public async execute(message: Message<true>, args: ArgumentResolver): Promise<void> {
 		let targetMessage: Message<true> | undefined;
 
-		let newContent: string | undefined;
+		const rawMessageId = args.getString("message");
+		const content = args.getStrings("content").join(" ");
 
 		// edit [message ID] [...message content]
-		if (args[1] && args[2]) {
-			const messageId = extractId(args[1]);
+		if (rawMessageId) {
+			const messageId = extractId(rawMessageId);
 
 			if (messageId) {
 				try {
 					targetMessage = await message.channel.messages.fetch(messageId);
-					newContent = args.slice(2).join(" ").trim();
 				} catch {
 					await message.channel.send("Couldn't find that message in this channel.");
 					return;
@@ -37,7 +54,6 @@ export default class DeleteCommand extends PrefixCommand {
 			if (message.reference?.messageId) {
 				try {
 					targetMessage = await message.channel.messages.fetch(message.reference.messageId);
-					newContent = args.slice(1).join(" ").trim();
 				} catch {
 					await message.channel.send("Couldn't find replied message in this channel.");
 					return;
@@ -46,11 +62,6 @@ export default class DeleteCommand extends PrefixCommand {
 				await message.channel.send("You must specific your character's message to edit.");
 				return;
 			}
-		}
-
-		if (!newContent) {
-			await message.channel.send("You must specific new content to edit.");
-			return;
 		}
 
 		const characterMessage = await db.query.characterMessagesTable.findFirst({
@@ -91,13 +102,13 @@ export default class DeleteCommand extends PrefixCommand {
 		})();
 
 		await webhook.editMessage(targetMessage, {
-			content: repliedMessageReview ? `${repliedMessageReview}\n${newContent}` : newContent,
+			content: repliedMessageReview ? `${repliedMessageReview}\n${content}` : content,
 		});
 
 		await db
 			.update(characterMessagesTable)
 			.set({
-				content: newContent,
+				content: content,
 			})
 			.where(eq(characterMessagesTable.id, characterMessage.id));
 	}
