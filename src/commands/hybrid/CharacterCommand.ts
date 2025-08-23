@@ -525,7 +525,7 @@ export default class CharacterCommand extends HybridCommand {
 		let newTag: string;
 
 		if (context.isInteraction()) {
-			newTag = context.source.options.getString("tag", true);
+			newTag = context.source.options.getString("new-tag", true);
 		} else {
 			newTag = sanitize(args.getString("new-tag", true)).toLowerCase();
 		}

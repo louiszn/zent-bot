@@ -21,44 +21,84 @@ interface ParsedResult {
 	value: ArgumentValue | ArgumentValue[];
 }
 
+interface ArgumentResolverOptions {
+	/**
+	 * Bot prefix, specified manually from content.
+	 */
+	prefix: string;
+	/**
+	 * Start index for arguments parser, used for locating where is the subcommand at.
+	 */
+	startAt: number;
+	/**
+	 * Raw values parsed from content.
+	 */
+	values: string[];
+	/**
+	 * Argument structures for matching values.
+	 */
+	args?: (Argument | null)[];
+}
+
 export default class ArgumentResolver {
 	public parsed: Record<string, ParsedResult> = {};
 
 	public constructor(
 		public client: ZentBot<true>,
-		public prefix: string,
-		public values: string[],
-		public args?: (Argument | null)[],
-		public startValueIndex: number = 1,
+		public options: ArgumentResolverOptions,
 	) {}
 
 	public static create(message: Message<true>, prefix: string) {
 		const values = message.content.slice(prefix.length).trim().split(/\s+/g);
-		return new ArgumentResolver(message.client as ZentBot<true>, prefix, values);
+
+		return new ArgumentResolver(message.client as ZentBot<true>, {
+			prefix,
+			values,
+			startAt: 1, // Starts at second value because the first one is used for trigger
+		});
 	}
 
-	public at(index: number) {
-		return this.values[index + 1];
-	}
-
-	public get commandName() {
+	/**
+	 * Get the first value as the command trigger.
+	 */
+	public get trigger() {
 		return this.values[0];
 	}
 
+	/**
+	 * Get amount of specified argument values.
+	 */
+	public get specifiedAmount() {
+		return this.values.length - this.options.startAt - 1;
+	}
+
+	/**
+	 * Get parsed raw values from content.
+	 */
+	public get values(): readonly string[] {
+		return [...this.options.values];
+	}
+
+	/**
+	 * Get argument structures.
+	 */
+	public get args(): readonly (Argument | null)[] | undefined {
+		return this.options.args ? [...this.options.args] : undefined;
+	}
+
 	public async resolve(args: (Argument | null)[], increaseStartPoint = false) {
-		const child = new ArgumentResolver(
-			this.client,
-			this.prefix,
-			this.values,
+		const child = new ArgumentResolver(this.client, {
+			prefix: this.options.prefix,
+			startAt: this.options.startAt + (increaseStartPoint ? 1 : 0),
+			values: this.options.values,
 			args,
-			this.startValueIndex + (increaseStartPoint ? 1 : 0),
-		);
+		});
 
 		if (!child.args) {
-			throw new Error("Missing args");
+			throw new Error("Missing argument structures.");
 		}
 
-		if (child.values.length - this.startValueIndex - 1 >= child.args.length) {
+		if (this.specifiedAmount >= child.args.length) {
 			await child.absoluteParse();
 		} else {
 			await child.dynamicParse();
@@ -213,24 +253,27 @@ export default class ArgumentResolver {
 			throw new Error("Missing args");
 		}
 
-		if (
-			this.values.length - this.startValueIndex - 1 > this.args.length &&
-			!this.args.at(-1)?.tuple
-		) {
+		if (this.specifiedAmount > this.args.length && !this.args.at(-1)?.tuple) {
 			throw new Error(
 				`Expected ${this.args.length} values, but received ${this.values.length - 1}`,
 			);
 		}
 
-		for (const [index, value] of this.values.slice(this.startValueIndex + 1).entries()) {
-			const arg = this.args[index];
+		let valueIndex = this.options.startAt + 1;
+		let argIndex = 0;
+
+		while (valueIndex < this.values.length && argIndex < this.args.length) {
+			const value = this.values[valueIndex];
+			const arg = this.args[argIndex];
 
 			if (arg === null) {
+				valueIndex++;
+				argIndex++;
 				continue;
 			}
 
 			if (arg.tuple) {
-				this.parsed[arg.name] = await this.resolveTuple(arg, index, index);
+				this.parsed[arg.name] = await this.resolveTuple(arg, valueIndex, argIndex);
 				break; // Tuple must be the last one, so it's safe to break here
 			}
 
@@ -244,6 +287,9 @@ export default class ArgumentResolver {
 				arg,
 				value: matchedValue,
 			};
+
+			valueIndex++;
+			argIndex++;
 		}
 	}
 
@@ -257,7 +303,7 @@ export default class ArgumentResolver {
 		}
 
 		let argIndex = 0;
-		let valueIndex = this.startValueIndex;
+		let valueIndex = this.options.startAt + 1;
 
 		while (valueIndex < this.values.length && argIndex < this.args.length) {
 			const value = this.values[valueIndex];
@@ -320,7 +366,9 @@ export default class ArgumentResolver {
 
 		const values: ArgumentValue[] = [];
 
-		for (const rest of this.values.slice(this.startValueIndex + startIndex + 1)) {
+		console.log(startIndex);
+
+		for (const rest of this.values.slice(startIndex)) {
 			const matchedValue = await this.matchValue(arg, rest);
 
 			if (matchedValue === null) {
@@ -430,6 +478,6 @@ export default class ArgumentResolver {
 
 export class DummyArgumentResolver extends ArgumentResolver {
 	public constructor() {
-		super(undefined as never, undefined as never, undefined as never);
+		super(undefined as never, undefined as never);
 	}
 }

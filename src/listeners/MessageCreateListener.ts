@@ -36,11 +36,9 @@ export default class MessageCreateListener extends Listener<Events.MessageCreate
 			return;
 		}
 
-		console.log("hello world");
-
 		const args = ArgumentResolver.create(message, usedPrefix);
 
-		const command = managers.commands.prefixes.get(args.commandName);
+		const command = managers.commands.prefixes.get(args.trigger);
 
 		if (!command) {
 			return;
@@ -69,7 +67,7 @@ export default class MessageCreateListener extends Listener<Events.MessageCreate
 				);
 			}
 		} catch (error) {
-			logger.error(`An error occurred while executing command '${args.commandName}':`, error);
+			logger.error(`An error occurred while executing command '${args.trigger}':`, error);
 		}
 	}
 }
